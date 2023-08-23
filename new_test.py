@@ -201,10 +201,10 @@ class App(QMainWindow):
         elif self.start_button.text()=='STEP4':
             self.on_button_click('images_/icons/next.jpg')
         elif self.start_button.text()=='NEXT':
+            self.info_label.setText("Press MULTI ON.\n\n You can see MULTIMETER Name on TextBox.")
             self.start_button.setVisible(False)
             self.show_good_message('Wait for 10 seconds. Untill the Powersupply and Multimeter get SET')
-            self.start_button.setText('MULTI ON')
-            self.info_label.setText("Press MULTI ON.\n\n You can see MULTIMETER Name on TextBox.")
+            self.start_button.setText('MULTI ON')            
             self.on_button_click('images_/images/PP9.jpg')
         elif self.start_button.text()=='MULTI ON':
             self.connect_multimeter()
@@ -213,17 +213,18 @@ class App(QMainWindow):
         elif self.start_button.text()=='STROM-I':
             self.calc_voltage_before_jumper()
         elif self.start_button.text()=='SPANNUNG':
+            self.start_button.setEnabled(False)
+            QMessageBox.information(self, 'Information', 'Place the Multimeter Lead at the Component Showing in the Imgae, and Wait for 5 Seconds to read the Voltage..')
+            time.sleep(2)
+            self.voltage_before_jumper = self.multimeter.query('MEAS:VOLT:DC?')
+            self.result_label.setText('Voltage before Jumper\n\n'+str(float(self.voltage_before_jumper))+'V')
+            time.sleep(2)
+            self.start_button.setEnabled(True)
+            self.start_button.setText('POWER OFF')            
             self.info_label.setText('Press "POWER OFF" button')
             self.on_button_click('images_/images/Start2.png')
-            self.start_button.setVisible(False)
-            
-            QMessageBox.information(self, 'Information', 'Place the Multimeter Lead at the Component Showing in the Imgae, and Wait for 5 Seconds to read the Voltage..')
-            time.sleep(5)
-            self.voltage_before_jumper = self.multimeter.query('MEAS:VOLT:DC?')
-            self.start_button.setVisible(True)
-            self.start_button.setText('POWER OFF')
-            self.result_label.setText('Voltage before Jumper\n'+str(float(self.voltage_before_jumper))+'V')
         elif self.start_button.text()=='POWER OFF':
+            self.result_label.setVisible(False)
             self.powersupply.write('OUTPut '+self.PS_channel+',OFF')
             self.info_label.setText('press "Close J" button\n and close the JUMPER with Soldering \n wait 10 seconds')
             self.start_button.setText('Close J')
@@ -234,11 +235,12 @@ class App(QMainWindow):
                 self.start_button.setText('STROM')
                 self.on_button_click('images_/images/PP8.jpg')
                 self.powersupply.write('OUTPut '+self.PS_channel+',ON')
-                self.info_label.setText('Press STROM button...\n and and Calculate the supply current\n after closed the JUMPER')                 
+                self.info_label.setText('Press STROM button...\n and and Calculate the supply current\n after closed the JUMPER')
             else:
                 self.on_button_click('images_/images/close_jumper.jpg')
         elif self.start_button.text()=='STROM':
             self.calc_voltage_before_jumper()
+            
         elif self.start_button.text() == 'NEXTT':
             self.on_button_click()
         ########################################################################################################
@@ -278,12 +280,13 @@ class App(QMainWindow):
             self.textBrowser.append('Wrong Input')
 
     def calc_voltage_before_jumper(self):
-        current = float(self.powersupply.query('MEASure:CURRent? '+self.PS_channel))        
+        current = float(self.powersupply.query('MEASure:CURRent? '+self.PS_channel))
+        self.result_label.setVisible(True)
         if self.start_button.text() == 'STROM-I':
             self.result_label.setText('Current before Jumper\n'+str(current)+'A')
             if 0.04 <= current <= 0.06:
                 self.start_button.setText('SPANNUNG')
-                self.start_button.setVisible(False)
+                # self.start_button.setVisible(False)
                 self.current_before_jumper = current
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
@@ -292,6 +295,7 @@ class App(QMainWindow):
                 self.start_button.setText('SPANNUNG')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
+            # self.result_label.setVisible(False)
         elif self.start_button.text() == 'STROM':
             self.result_label.setText('Current After Jumper\n'+str(current)+'A')
             if 0.09 <= current <= 0.15:
@@ -301,10 +305,9 @@ class App(QMainWindow):
                 self.info_label.setText('\n \n Press TEST V Button to run the Voltage Tests. Be careful.')
                 self.test_button.setText('TEST-V')
                 self.test_button.setVisible(True)
-                self.start_button.setVisible(False)
+                
             else:
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Euipment back.')
-
 
     def connect_multimeter(self):
         if not self.multimeter:
