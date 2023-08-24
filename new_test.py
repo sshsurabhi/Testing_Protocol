@@ -1,10 +1,20 @@
-import datetime, os, sys, time, openpyxl, configparser, serial
+import configparser
+import datetime
+import os
+import sys
+import time
+
+import openpyxl
 import pyvisa as visa
+import serial
 from PyQt5 import uic
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from popup import MyDialog   # need to remove later
+
+from popup import MyDialog  # need to remove later
+
+
 ##################################################################################################################################
 class WorkerThread(QThread):
     process_completed = pyqtSignal()
@@ -135,7 +145,7 @@ class App(QMainWindow):
 
 
         self.test_images = ['images_/images/R700.jpg','images_/images/R709_before_jumper.jpg','images_/images/R700_DC.jpg', 'images_/images/PP2.png','images_/images/C443.jpg','images_/images/C442.jpg','images_/images/C441.jpg','images_/images/C412.jpg',
-                            'images_/images/C430.jpg','images_/images/C443_1.jpg','images_/images/C442_1.jpg','images_/images/C441_1.jpg','images_/images/C412_1.jpg','images_/images/C430_1.jpg', 'images_/images/R709.jpg',]
+                            'images_/images/C430.jpg','images_/images/C443_1.jpg','images_/images/C442_1.jpg','images_/images/C441_1.jpg','images_/images/C412_1.jpg','images_/images/C430_1.jpg', 'images_/images/PP.jpg',]
         self.test_index = 0
         self.DCV_readings = [0,0,0,0,0,0,0]
         self.ACV_readings = [0,0,0,0,0,0,0]
@@ -201,7 +211,7 @@ class App(QMainWindow):
         elif self.start_button.text()=='STEP4':
             self.on_button_click('images_/icons/next.jpg')
         elif self.start_button.text()=='NEXT':
-            self.info_label.setText("Press MULTI ON.\n\n You can see MULTIMETER Name on TextBox.")
+            self.info_label.setText("You can see MULTIMETER Name on TextBox.\n\nwait for 10-15 seconds.\n\nPress MULTI ON.")
             self.start_button.setVisible(False)
             self.show_good_message('Wait for 10 seconds. Untill the Powersupply and Multimeter get SET')
             self.start_button.setText('MULTI ON')            
@@ -211,14 +221,17 @@ class App(QMainWindow):
         elif self.start_button.text()=='POWER ON':
             self.connect_powersupply()
         elif self.start_button.text()=='STROM-I':
+            time.sleep(2)
             self.calc_voltage_before_jumper()
         elif self.start_button.text()=='SPANNUNG':
             self.start_button.setEnabled(False)
-            QMessageBox.information(self, 'Information', 'Place the Multimeter Lead at the Component Showing in the Imgae, and Wait for 5 Seconds to read the Voltage..')
-            time.sleep(2)
-            self.voltage_before_jumper = self.multimeter.query('MEAS:VOLT:DC?')
+            self.voltage_before_jumper = float(self.multimeter.query('MEAS:VOLT:DC?'))
             self.result_label.setText('Voltage before Jumper\n\n'+str(float(self.voltage_before_jumper))+'V')
             time.sleep(2)
+            if 3.28 < self.voltage_before_jumper < 3.38:
+                QMessageBox.information(self, 'Information', 'Proceed Next')
+            else:
+                QMessageBox.information(self, 'Information', 'Wrong Voltage. Check Connections again.')
             self.start_button.setEnabled(True)
             self.start_button.setText('POWER OFF')            
             self.info_label.setText('Press "POWER OFF" button')
@@ -239,10 +252,49 @@ class App(QMainWindow):
             else:
                 self.on_button_click('images_/images/close_jumper.jpg')
         elif self.start_button.text()=='STROM':
+            time.sleep(2)
             self.calc_voltage_before_jumper()
             
         elif self.start_button.text() == 'NEXTT':
-            self.on_button_click()
+            self.on_button_click('images_/images/Start2.png')
+            self.info_label.setText('Press FPGA...\n Switch OFF the PowerSupply and Multimeter.')
+            self.start_button.setText('FPGA')
+        elif self.start_button.text()=='FPGA':
+            self.on_button_click('images_/images/Fix_Bolts.jpg')
+            self.info_label.setText('Press FPGA> \n Take the board and fix the bolts (refer to Image).')
+            self.start_button.setText('FPGA>')
+        elif self.start_button.text() == 'FPGA>':
+            self.start_button.setText('FPGA>>')
+            self.on_button_click('images_/images/Fix_Dip_Switch.jpg')
+            self.info_label.setText("See the Image and Do the same.\n\n Press FPGA>>")
+        elif self.start_button.text() == 'FPGA>>':
+            self.start_button.setText('FPGA>>>')
+            self.on_button_click('images_/images/FPGA_.jpg')
+            self.info_label.setText("See the Image and Do the same\n\n Press FPGA>>>")
+        elif self.start_button.text() == 'FPGA>>>':
+            self.start_button.setText('FPGA>>>>')
+            self.on_button_click('images_/images/FPGA_2.jpg')
+            self.info_label.setText("See the Image and Do the same\n\n Press FPGA>>>>")
+        elif self.start_button.text() == 'FPGA>>>>':
+            self.start_button.setText('AUTO_Test')
+            self.on_button_click('images_/images/FPGA_B.jpg')
+            self.info_label.setText("See the Image and Do the same\n\n Press FPGA>>>>>")
+        elif self.start_button.text() == 'AUTO_Test':
+            self.on_button_click('images_/icons/next.jpg')
+            self.info_label.setText("Press Connect Button")
+            self.start_button.setVisible(False)
+            self.port_label.setVisible(True)
+            self.baudrate_label.setVisible(True)
+            self.port_box.setVisible(True)
+            self.baudrate_box.setVisible(True)
+            self.connect_button.setVisible(True)
+            self.refresh_button.setVisible(True)
+        elif self.start_button.text()=='SERIAL TEST':
+            self.start_process()
+            self.info_label.setText('Wait 10 seconds ')
+            self.on_button_click('images_/images/Start2.png')
+            QMessageBox.information(self, "Important", "Read and watch the image clearly and do the process carefully.")
+
         ########################################################################################################
     def load_voltage_current(self):
         if self.vals_button.text() == 'CH':
@@ -305,6 +357,7 @@ class App(QMainWindow):
                 self.info_label.setText('\n \n Press TEST V Button to run the Voltage Tests. Be careful.')
                 self.test_button.setText('TEST-V')
                 self.test_button.setVisible(True)
+                self.start_button.setVisible(False)
                 
             else:
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Euipment back.')
@@ -371,10 +424,10 @@ class App(QMainWindow):
         if self.test_index < len(self.test_images):
             image_name = self.test_images[self.test_index]
             self.on_button_click(image_name)
-            self.info_label.setText('Calculate Voltage at this component.\n It shouzld be in between 3.28 and 3.38.\n Keep the Ground at the specified connection.\nwait at least 5 seconds to get the readings.')
             if self.test_index == 0:                
                 self.info_label.setText('Calculate Voltage at this R700 component. Wait 5 seconds')
                 time.sleep(5)
+
                 attempt = 0
                 x = self.DC_voltage_R709()
                 while attempt < 2 and not (3.28 < x < 3.38):
@@ -385,66 +438,119 @@ class App(QMainWindow):
                     self.info_label.setText('Calculate voltage at R700')
                 else:
                     self.info_label.setText('Mesurement is not in range.')
+
+
+
             elif self.test_index == 1:
                 self.info_label.setText('Measure at this R709 Component. wait 5 seconds to get the readings.')
                 time.sleep(5)
+                attempt = 0
                 x = self.DC_voltage_R700()
-                # self.config_file.set('Powersupply Test', 'dcv b/w gnd - r709', x)
+                while attempt < 2 and not (4.98 < x < 5.08):
+                    attempt += 1
+                    time.sleep(5)
+                    x = self.DC_voltage_R700()
+                if 4.98 < x < 5.08:
+                    self.info_label.setText('Measure AC Voltage at R709 Component')
+                else:
+                    self.info_label.setText('Measurement is not in exected range. Do another time ot pack it back to Box.')
+
+
+
+
             elif self.test_index == 2:
                 time.sleep(2)
                 self.multimeter.query('MEAS:VOLT:AC?')
                 self.info_label.setText('Measure AC Voltage at R700. \n Careful.')
                 time.sleep(5)
                 self.ACV_readings[0] = self.AC_voltage_R709_R700()
+
+
+
             elif self.test_index == 3:
                 self.info_label.setText('Measure DC voltage at C443.. \n check the image for component placement.')
                 time.sleep(5)
                 self.ACV_readings[1] = self.AC_voltage_R709_R700()
+
+
+
             elif self.test_index == 4:
                 self.show_good_message('Change the Ground Connection according to the Image.')
+
+
             elif self.test_index == 5:
                 self.info_label.setText('Measure DC voltage at C442.. \n ')
                 time.sleep(5)
                 self.DC_voltage_C443()
+
+
+
             elif self.test_index == 6:
                 self.info_label.setText('Measure DC voltage at C441.. \n ')
                 time.sleep(5)
                 self.DCV_readings[3] = self.DC_voltage_C442_C441()
+
+
+
             elif self.test_index == 7:
                 self.info_label.setText('Measure DC voltage at C412.. \n ')
                 time.sleep(5)
                 self.DCV_readings[4] = self.DC_voltage_C442_C441()
+
+
+
             elif self.test_index == 8:
                 self.info_label.setText('Measure DC voltage at C430.. \n ')
                 self.DCV_readings[5] = self.DC_voltage_C412()
                 time.sleep(5)
+
+
+
             elif self.test_index == 9:
                 self.info_label.setText('Measure AC voltage at C443.. \n ')
+                time.sleep(5)
                 self.DCV_readings[6] = self.DC_voltage_C430()
-                time.sleep(5)            
+
+
+
             elif self.test_index == 10:
                 self.info_label.setText('Measure AC voltage at C442.. \n ')
-                self.ACV_readings[2] = self.AC_voltage_C443()
                 time.sleep(5)
+                self.ACV_readings[2] = self.AC_voltage_C443()
+
+
+
             elif self.test_index == 11:
                 self.info_label.setText('Measure AC voltage at C441.. \n ')
-                self.ACV_readings[3] = self.AC_voltage_C442_C441()
                 time.sleep(5)
+                self.ACV_readings[3] = self.AC_voltage_C442_C441()
+
+
+
             elif self.test_index == 12:
                 self.info_label.setText('Measure AC voltage at C412.. \n ')
-                self.ACV_readings[4] = self.AC_voltage_C442_C441()
                 time.sleep(5)
+                self.ACV_readings[4] = self.AC_voltage_C442_C441()
+
+
+
             elif self.test_index == 13:
                 self.info_label.setText('Measure AC voltage at C430.. \n ')
-                self.ACV_readings[5] = self.AC_voltage_C412_C430()
                 time.sleep(5)
+                self.ACV_readings[5] = self.AC_voltage_C412_C430()
+
+
+
             elif self.test_index == 14:
                 self.info_label.setText('All Measurements Complete... \n ')
                 self.ACV_readings[6] = self.AC_voltage_C412_C430()
+
+
                 self.test_button.setVisible(False)
                 self.start_button.setText('NEXTT')
                 self.start_button.setVisible(True)
             self.test_index += 1
+
         else:            
             self.image_timer.stop()
 
@@ -458,7 +564,7 @@ class App(QMainWindow):
             self.textBrowser.append('DC Voltage at R709 Component'+str(self.DCV_readings[0]))
             self.result_label.setStyleSheet("background-color: red;")
             self.result_label.setText('DC VOltage @R709\n'+str(self.DCV_readings[0]))
-            QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")
+            QMessageBox.information(self, "Information", "Value wrong. Will check another time")
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
         return self.DCV_readings[0]
     
@@ -603,22 +709,23 @@ class App(QMainWindow):
             com_port = self.port_box.currentText()            # Get the selected com port and baud rate
             baud_rate = int(self.baudrate_box.currentText())
             self.serial_port = serial.Serial(com_port, baud_rate, timeout=1)            # Create a new serial port object and open it
-            self.port_box.setVisible(False)  # Disable the combo boxes and change the button text
+            self.port_box.setEnabled(False)  # Disable the combo boxes and change the button text
             self.start_button.setText('SERIAL TEST')
             self.start_button.setVisible(True)
             self.connect_button.setVisible(True)
-            self.baudrate_box.setVisible(False)
+            self.baudrate_box.setEnabled(False)
             self.connect_button.setText('Disconnect')
             self.textBrowser.append('Serial Communication Connected')
-            self.refresh_button.setVisible(False)
+            self.refresh_button.setEnabled(False)
         else:
             self.serial_port.close()            # Close the serial port
             self.serial_port = None
-            self.connect_button.setVisible(True)
-            self.port_box.setVisible(True)            # Enable the combo boxes and change the button text
-            self.baudrate_box.setVisible(True)
-            self.refresh_button.setVisible(True)
+            self.connect_button.setEnabled(True)
+            self.port_box.setEnabled(True)            # Enable the combo boxes and change the button text
+            self.baudrate_box.setEnabled(True)
+            self.refresh_button.setEnabled(True)
             self.connect_button.setText('Connect')
+            self.start_button.setVisible(False)
             self.textBrowser.append('Communication Disconnected')
     ########################################################################################################
     def refresh_connect(self):
