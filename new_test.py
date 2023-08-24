@@ -212,7 +212,7 @@ class App(QMainWindow):
             self.on_button_click('images_/icons/next.jpg')
         elif self.start_button.text()=='NEXT':
             self.info_label.setText("You can see MULTIMETER Name on TextBox.\n\nwait for 10-15 seconds.\n\nPress MULTI ON.")
-            self.start_button.setVisible(False)
+            self.start_button.setEnabled(False)
             self.show_good_message('Wait for 10 seconds. Untill the Powersupply and Multimeter get SET')
             self.start_button.setText('MULTI ON')            
             self.on_button_click('images_/images/PP9.jpg')
@@ -256,6 +256,7 @@ class App(QMainWindow):
             self.calc_voltage_before_jumper()
             
         elif self.start_button.text() == 'NEXTT':
+            self.result_label.setVisible(False)
             self.on_button_click('images_/images/Start2.png')
             self.info_label.setText('Press FPGA...\n Switch OFF the PowerSupply and Multimeter.')
             self.start_button.setText('FPGA')
@@ -415,6 +416,7 @@ class App(QMainWindow):
 
 
     def on_cal_voltage_current(self):
+        self.test_button.setEnabled(False)
         self.start_button.setVisible(False)
         self.image_timer = QTimer(self)
         self.image_timer.timeout.connect(self.change_image)
@@ -501,8 +503,9 @@ class App(QMainWindow):
 
             elif self.test_index == 8:
                 self.info_label.setText('Measure DC voltage at C430.. \n ')
-                self.DCV_readings[5] = self.DC_voltage_C412()
                 time.sleep(5)
+                self.DCV_readings[5] = self.DC_voltage_C412()
+                
 
 
 
@@ -543,6 +546,7 @@ class App(QMainWindow):
 
             elif self.test_index == 14:
                 self.info_label.setText('All Measurements Complete... \n ')
+                time.sleep(5)
                 self.ACV_readings[6] = self.AC_voltage_C412_C430()
 
 
@@ -716,6 +720,8 @@ class App(QMainWindow):
             self.baudrate_box.setEnabled(False)
             self.connect_button.setText('Disconnect')
             self.textBrowser.append('Serial Communication Connected')
+            self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+            self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
             self.refresh_button.setEnabled(False)
         else:
             self.serial_port.close()            # Close the serial port
@@ -754,7 +760,61 @@ class App(QMainWindow):
 
     def enable_button(self):
         self.timer1.stop()
-        self.start_button.setVisible(True)
+        self.start_button.setEnabled(True)
+
+
+    def closeEvent(self, event):
+        if not self.powersupply is None:
+            try:
+                response = self.powersupply.query(f"OUTP? CH{self.PS_channel}")
+                print(response)
+                if not response == None:
+                    self.powersupply.write('OUTPut '+self.PS_channel+',OFF')
+                else:
+                    pass
+            except visa.errors.InvalidSession:
+                print('Error in PS')
+        else:
+            pass
+        event.accept()
+    ########################################################################################################
+    def create_ini_file(self):
+        config = configparser.ConfigParser()
+        config.add_section('Powersupply Test')
+        config.add_section('I2C Test')
+        power_supply_values = {
+            "Supply Voltage" : self.max_voltage,
+            "Supply Current" : self.max_current,
+            "current_before_jumper" : self.current_before_jumper,
+            "voltage_before_jumper" : self.voltage_before_jumper,
+            "current_after_jumper" : self.current_after_jumper,
+            "dcv_bw_gnd_n_r709" : self.DCV_readings[0],
+            "dcv_bw_gnd_n_r700" : self.DCV_readings[1],
+            "acv_bw_gnd_n_r709" : self.ACV_readings[0],
+            "acv_bw_gnd_n_r700" : self.ACV_readings[1],
+            "dcv_bw_gnd_n_c443" : self.DCV_readings[2],
+            "dcv_bw_gnd_n_c442" : self.DCV_readings[3],
+            "dcv_bw_gnd_n_c441" : self.DCV_readings[4],
+            "dcv_bw_gnd_n_c412" : self.DCV_readings[5],
+            "dcv_bw_gnd_n_c430" : self.DCV_readings[6],
+            "acv_bw_gnd_n_c443" : self.ACV_readings[2],
+            "acv_bw_gnd_n_c442" : self.ACV_readings[3],
+            "acv_bw_gnd_n_c441" : self.ACV_readings[4],
+            "acv_bw_gnd_n_c412" : self.ACV_readings[5],
+            "acv_bw_gnd_n_c430" : self.ACV_readings[6]
+        }
+        I2C_Values = {
+            "UID" : self.uid,
+            "ic704_register_reading" : self.ic704_register_reading
+        }
+        for key, value in power_supply_values.items():
+            config.set('Powersupply Test', key, str(value))
+        for key, value in I2C_Values.items():
+            config.set('I2C Test', key, str(value))
+        with open('conf_igg.ini', 'w') as configfile:
+            config.write(configfile)
+
+
 def main():
     app = QApplication(sys.argv)
     Window = App()
