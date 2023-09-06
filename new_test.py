@@ -504,7 +504,6 @@ class App(QMainWindow):
                 self.info_label.setText('Measure DC voltage at C442.. \n ')
                 time.sleep(5)
                 attempt = 0
-                print('DCV 2:', self.DC_voltage_C443())
                 self.DCV_readings[2] = self.DC_voltage_C443()
                 while attempt < 2 and not (11.95 <= self.DCV_readings[2] <= 12.05):
                     attempt += 1
@@ -598,33 +597,33 @@ class App(QMainWindow):
             self.image_timer.stop()
 
     def DC_voltage_R709(self):
-        self.DCV_readings[0] = float(self.multimeter.query('MEAS:VOLT:DC?'))
+        voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
         if 3.28 <= self.DCV_readings[0] <= 3.38:
-            self.textBrowser.append('DC Voltage at R709 Component'+str(self.DCV_readings[0]))
+            self.textBrowser.append('DC Voltage at R709 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @R709\n'+str(self.DCV_readings[0]))
+            self.result_label.setText('DC VOltage @R709\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at R709 Component'+str(self.DCV_readings[0]))
+            self.textBrowser.append('DC Voltage at R709 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage @R709\n'+str(self.DCV_readings[0]))
+            self.result_label.setText('DC VOltage @R709\n'+str(voltage))
             QMessageBox.information(self, "Information", "Value wrong. Will check another time")
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
-        return self.DCV_readings[0]
+        return voltage
     
     
     def DC_voltage_R700(self):
-        self.DCV_readings[1] = float(self.multimeter.query('MEAS:VOLT:DC?'))
-        if 4.98 <= self.DCV_readings[1] <= 5.08:
-            self.textBrowser.append('DC Voltage at R700 Component'+str(self.DCV_readings[1]))
+        voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
+        if 4.98 <= voltage <= 5.08:
+            self.textBrowser.append('DC Voltage at R700 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @R700\n'+str(float(self.DCV_readings[1])))
+            self.result_label.setText('DC VOltage @R700\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at R700 Component'+str(self.DCV_readings[1]))
+            self.textBrowser.append('DC Voltage at R700 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage @R700\n'+str(self.DCV_readings[1]))
+            self.result_label.setText('DC VOltage @R700\n'+str(voltage))
             QMessageBox.information(self, "Information", "Result has been different with Estimated. Please try all results one more time.")
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
-        return self.DCV_readings[1]
+        return voltage
 
     def AC_voltage_R709_R700(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
@@ -641,18 +640,18 @@ class App(QMainWindow):
         return voltage
 
     def DC_voltage_C443(self):
-        self.DCV_readings[2] = float(self.multimeter.query('MEAS:VOLT:DC?'))
-        if 11.95 <= self.DCV_readings[2] <= 12.05:
-            self.textBrowser.append('DC Voltage at C442 Component'+str(self.DCV_readings[2]))
+        voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
+        if 11.95 <= voltage <= 12.05:
+            self.textBrowser.append('DC Voltage at C442 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @C442\n'+str(self.DCV_readings[2]))
+            self.result_label.setText('DC VOltage @C442\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at C442 Component'+str(self.DCV_readings[2]))
+            self.textBrowser.append('DC Voltage at C442 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage @C442\n'+str(self.DCV_readings[2]))
+            self.result_label.setText('DC VOltage @C442\n'+str(voltage))
             QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
-        return self.DCV_readings[2]
+        return voltage
 
     def DC_voltage_C442_C441(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
@@ -697,18 +696,18 @@ class App(QMainWindow):
         return voltage
 
     def AC_voltage_C443(self):
-        self.ACV_readings[2] = float(self.multimeter.query('MEAS:VOLT:AC?'))
-        if self.ACV_readings[2] <= 0.01:
-            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(self.ACV_readings[2]))
+        voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
+        if voltage <= 0.01:
+            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @R709\n'+str(self.ACV_readings[2]))
+            self.result_label.setText('DC VOltage @R709\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(self.ACV_readings[2]))
+            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage AC_voltage_C443\n'+str(self.ACV_readings[2]))
+            self.result_label.setText('DC VOltage AC_voltage_C443\n'+str(voltage))
             QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")   
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
-        return self.ACV_readings[2]
+        return voltage
 
     def AC_voltage_C442_C441(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
