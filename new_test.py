@@ -137,7 +137,12 @@ class App(QMainWindow):
         self.save_button.setVisible(False)
         self.id_Edit.setVisible(False)
         self.Final_result_box.setVisible(False)
-        self.firstMessage()
+        self.ch_button.setVisible(False)
+        self.channel_combobox.setVisible(False)
+
+        # self.firstMessage()
+        self.on_button_click('images_/images/PP1.jpg')
+        self.info_label.setText('Welcome \n \n Press START')
         ########################################################################################################
 
 
@@ -434,11 +439,11 @@ class App(QMainWindow):
                 time.sleep(5)
                 attempt = 0
                 self.DCV_readings[0] = self.DC_voltage_R709()
-                while attempt < 2 and not (3.28 < self.DCV_readings[0] < 3.38):
+                while attempt < 2 and not (3.25 < self.DCV_readings[0] < 3.35):
                     attempt += 1
                     time.sleep(5)
                     self.DCV_readings[0] = self.DC_voltage_R709()
-                if 3.28 < self.DCV_readings[0] < 3.38:
+                if 3.25 < self.DCV_readings[0] < 3.35:
                     self.info_label.setText('Calculate voltage at R700')
                 else:
                     self.info_label.setText('Mesurement is not in range.')
@@ -531,7 +536,7 @@ class App(QMainWindow):
                 time.sleep(5)
                 attempt = 0
                 self.DCV_readings[4] = self.DC_voltage_C442_C441()
-                while attempt < 2 and not (4.95 < self.DCV_readings[3] < 5.05):
+                while attempt < 2 and not (4.95 < self.DCV_readings[4] < 5.05):
                     attempt += 1
                     time.sleep(5)
                     self.DCV_readings[4] =  self.DC_voltage_C442_C441()
@@ -560,7 +565,7 @@ class App(QMainWindow):
                 time.sleep(5)
                 attempt = 0
                 self.DCV_readings[6] = self.DC_voltage_C430()
-                while attempt < 2 and not (self.DCV_readings[6] <= 0.01):
+                while attempt < 2 and not (2.028 < self.DCV_readings[6] < 2.068):
                     attempt += 1
                     time.sleep(5)
                     self.DCV_readings[6] = self.DC_voltage_C430()
@@ -656,7 +661,7 @@ class App(QMainWindow):
     ############################################################################################################################################
     def DC_voltage_R709(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-        if 3.28 <= voltage <= 3.38:
+        if 3.25 <= voltage <= 3.35:
             self.textBrowser.append('DC Voltage at R709 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
             self.result_label.setText('DC VOltage @R709\n'+str(voltage))
@@ -671,7 +676,7 @@ class App(QMainWindow):
     
     def DC_voltage_R700(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-        if 4.98 <= voltage <= 5.08:
+        if 4.95 <= voltage <= 5.05:
             self.textBrowser.append('DC Voltage at R700 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
             self.result_label.setText('DC VOltage @R700\n'+str(voltage))
@@ -756,13 +761,13 @@ class App(QMainWindow):
     def AC_voltage_C443(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
         if voltage <= 0.01:
-            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(voltage))
+            self.textBrowser.append('AC_voltage_C443 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @R709\n'+str(voltage))
+            self.result_label.setText('VOltage @R709\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at AC_voltage_C443 Component'+str(voltage))
+            self.textBrowser.append('AC_voltage_C443 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage AC_voltage_C443\n'+str(voltage))
+            self.result_label.setText('AC_voltage_C443\n'+str(voltage))
             QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")   
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
         return voltage
@@ -770,13 +775,13 @@ class App(QMainWindow):
     def AC_voltage_C442_C441(self):
         voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
         if voltage <= 0.05:
-            self.textBrowser.append('DC Voltage at AC_voltage_C442_C441 Component'+str(voltage))
+            self.textBrowser.append('AC_voltage_C442_C441 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage AC_voltage_C442_C441'+str(voltage))
+            self.result_label.setText('AC_voltage_C442_C441'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at AC_voltage_C442_C441 Component'+str(voltage))
+            self.textBrowser.append('AC_voltage_C442_C441 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage AC_voltage_C442_C441 \n'+str(voltage))
+            self.result_label.setText('AC_voltage_C442_C441 \n'+str(voltage))
             QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")   
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
         return voltage
@@ -786,11 +791,11 @@ class App(QMainWindow):
         if voltage <= 0.001:
             self.textBrowser.append('DC Voltage at AC_voltage_C412_C430 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('DC VOltage @AC_voltage_C412_C430\n'+str(voltage))
+            self.result_label.setText('Voltage\n'+str(voltage))
         else:
-            self.textBrowser.append('DC Voltage at AC_voltage_C412_C430 Component'+str(voltage))
+            self.textBrowser.append('AC_voltage_C412_C430 Component'+str(voltage))
             self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('DC VOltage AC_voltage_C412_C430\n'+str(voltage))
+            self.result_label.setText('AC_voltage_C412_C430\n'+str(voltage))
             QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")   
         QMessageBox.information(self, "Information", "Check the Image to measure component.")
         return voltage
@@ -818,8 +823,10 @@ class App(QMainWindow):
             self.baudrate_box.setEnabled(False)
             self.connect_button.setText('Disconnect')
             self.textBrowser.append('Serial Communication Connected')
-            self.powersupply.write('OUTPut '+self.PS_channel+',ON')
-            self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
+            # self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
+            # time.sleep(5)
+            # self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+            # self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
             self.refresh_button.setEnabled(False)
         else:
             self.serial_port.close()            # Close the serial port

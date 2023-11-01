@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1551</width>
-    <height>855</height>
+    <width>1877</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
    <widget class="QLabel" name="image_label">
     <property name="geometry">
      <rect>
-      <x>780</x>
+      <x>670</x>
       <y>60</y>
       <width>761</width>
       <height>751</height>
@@ -52,7 +52,7 @@ selection-color: rgb(0, 85, 255);</string>
    <widget class="QLabel" name="title_label">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>650</x>
       <y>0</y>
       <width>371</width>
       <height>61</height>
@@ -85,7 +85,7 @@ selection-color: rgb(0, 85, 255);</string>
    <widget class="QLabel" name="time_label">
     <property name="geometry">
      <rect>
-      <x>1380</x>
+      <x>1280</x>
       <y>20</y>
       <width>151</width>
       <height>21</height>
@@ -114,10 +114,10 @@ selection-color: rgb(0, 85, 255);</string>
    <widget class="QWidget" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>90</x>
       <y>30</y>
       <width>511</width>
-      <height>161</height>
+      <height>121</height>
      </rect>
     </property>
     <widget class="QPushButton" name="start_button">
@@ -126,7 +126,7 @@ selection-color: rgb(0, 85, 255);</string>
        <x>5</x>
        <y>0</y>
        <width>141</width>
-       <height>161</height>
+       <height>121</height>
       </rect>
      </property>
      <property name="font">
@@ -152,7 +152,7 @@ selection-color: rgb(0, 85, 255);</string>
        <x>355</x>
        <y>0</y>
        <width>151</width>
-       <height>161</height>
+       <height>121</height>
       </rect>
      </property>
      <property name="font">
@@ -179,7 +179,7 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>36</y>
+       <y>40</y>
        <width>131</width>
        <height>41</height>
       </rect>
@@ -211,7 +211,7 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>83</y>
+       <y>80</y>
        <width>71</width>
        <height>41</height>
       </rect>
@@ -243,7 +243,7 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>36</y>
+       <y>40</y>
        <width>71</width>
        <height>41</height>
       </rect>
@@ -275,7 +275,7 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>83</y>
+       <y>80</y>
        <width>131</width>
        <height>41</height>
       </rect>
@@ -291,23 +291,95 @@ selection-color: rgb(0, 85, 255);</string>
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
+    <widget class="QLabel" name="ch_button">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>0</y>
+       <width>71</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Panel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="text">
+      <string>CH</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="channel_combobox">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>0</y>
+       <width>131</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <item>
+      <property name="text">
+       <string>CH1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>CH2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>CH3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Parallel</string>
+      </property>
+     </item>
+    </widget>
    </widget>
    <widget class="QWidget" name="widget_2" native="true">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>200</y>
-      <width>741</width>
-      <height>371</height>
+      <x>30</x>
+      <y>160</y>
+      <width>631</width>
+      <height>331</height>
      </rect>
     </property>
     <widget class="QLabel" name="info_label">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>0</x>
        <y>0</y>
-       <width>731</width>
-       <height>371</height>
+       <width>631</width>
+       <height>331</height>
       </rect>
      </property>
      <property name="font">
@@ -336,15 +408,15 @@ selection-color: rgb(0, 85, 255);</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>590</y>
-      <width>741</width>
-      <height>211</height>
+      <y>500</y>
+      <width>641</width>
+      <height>301</height>
      </rect>
     </property>
     <widget class="QPushButton" name="refresh_button">
      <property name="geometry">
       <rect>
-       <x>290</x>
+       <x>210</x>
        <y>53</y>
        <width>101</width>
        <height>41</height>
@@ -370,7 +442,7 @@ selection-color: rgb(0, 85, 255);</string>
     <widget class="QPushButton" name="connect_button">
      <property name="geometry">
       <rect>
-       <x>290</x>
+       <x>210</x>
        <y>3</y>
        <width>101</width>
        <height>41</height>
@@ -430,7 +502,7 @@ selection-color: rgb(0, 85, 255);</string>
       <rect>
        <x>80</x>
        <y>3</y>
-       <width>201</width>
+       <width>131</width>
        <height>41</height>
       </rect>
      </property>
@@ -482,13 +554,13 @@ selection-color: rgb(0, 85, 255);</string>
       <rect>
        <x>80</x>
        <y>53</y>
-       <width>201</width>
+       <width>131</width>
        <height>41</height>
       </rect>
      </property>
      <property name="font">
       <font>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -496,13 +568,28 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="layoutDirection">
       <enum>Qt::RightToLeft</enum>
      </property>
+     <item>
+      <property name="text">
+       <string>9600</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>57600</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>115200</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLineEdit" name="Final_result_box">
      <property name="geometry">
       <rect>
-       <x>200</x>
-       <y>170</y>
-       <width>541</width>
+       <x>160</x>
+       <y>240</y>
+       <width>481</width>
        <height>41</height>
       </rect>
      </property>
@@ -524,8 +611,8 @@ selection-color: rgb(0, 85, 255);</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>170</y>
-       <width>191</width>
+       <y>240</y>
+       <width>151</width>
        <height>41</height>
       </rect>
      </property>
@@ -548,8 +635,8 @@ selection-color: rgb(0, 85, 255);</string>
       <rect>
        <x>10</x>
        <y>100</y>
-       <width>731</width>
-       <height>61</height>
+       <width>631</width>
+       <height>131</height>
       </rect>
      </property>
      <property name="frameShape">
@@ -562,9 +649,9 @@ selection-color: rgb(0, 85, 255);</string>
     <widget class="QPushButton" name="save_button">
      <property name="geometry">
       <rect>
-       <x>610</x>
+       <x>520</x>
        <y>0</y>
-       <width>131</width>
+       <width>121</width>
        <height>95</height>
       </rect>
      </property>
@@ -588,9 +675,9 @@ selection-color: rgb(0, 85, 255);</string>
     <widget class="QLabel" name="result_label">
      <property name="geometry">
       <rect>
-       <x>396</x>
+       <x>312</x>
        <y>2</y>
-       <width>211</width>
+       <width>208</width>
        <height>91</height>
       </rect>
      </property>
@@ -615,6 +702,191 @@ selection-color: rgb(0, 85, 255);</string>
      </property>
     </widget>
    </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>1440</x>
+      <y>0</y>
+      <width>431</width>
+      <height>811</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Panel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>3</number>
+    </property>
+    <attribute name="horizontalHeaderMinimumSectionSize">
+     <number>39</number>
+    </attribute>
+    <row>
+     <property name="text">
+      <string>3PIN Plug</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Power SET</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Strom Read</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Voltage Read</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Power OFF</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Jumper Close</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Read Strom</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC R709</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC R700</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>AC R709</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>New Row</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>AC R700</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC C442</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC C441</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC C412</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>DC C430</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ISOGND SET</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ACV C443</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ACV C442</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ACV C441</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ACV C412</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>ACV C430</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Supply OFF</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Read Current</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Power after FPGA</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>UID</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>New Row</string>
+     </property>
+    </row>
+    <column>
+     <property name="text">
+      <string>Expected</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Tollerance</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Recieved</string>
+     </property>
+    </column>
+   </widget>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>1450</x>
+      <y>120</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Voltage Read</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
@@ -622,7 +894,7 @@ selection-color: rgb(0, 85, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1551</width>
+     <width>1877</width>
      <height>21</height>
     </rect>
    </property>
