@@ -21,7 +21,6 @@ class WorkerThread(QThread):
                 for command in self.commands:
                     if self.next_command_index < (len(self.commands)+1):
                         self.serial_port.write(command.encode())
-                        # self.textBrowser.append('Processed Command: '+command + ' ')
                         response = self.serial_port.readline().decode('ascii')
                         self.result_signal.emit((f"Response: {response}"))
                         self.next_command_index += 1
@@ -87,7 +86,7 @@ class App(QMainWindow):
         ########################################################################################################
         # self.timer = QTimer(self)
         # self.timer.timeout.connect(self.update_time_label)
-        # self.timer.start(1000) 
+        # self.timer.start(1000)
         ########################################################################################################
         self.rm = visa.ResourceManager()
         self.multimeter = None
@@ -105,19 +104,6 @@ class App(QMainWindow):
         self.value_edit.returnPressed.connect(self.load_voltage_current)
         ########################################################################################################
 
-        # self.test_button.setVisible(False)
-        # self.save_button.setVisible(False)
-        # self.version_button.setVisible(False)
-        # self.vals_button.setVisible(False)
-        # self.value_edit.setVisible(False)
-        # self.connect_button.setVisible(False)
-        # self.refresh_button.setVisible(False)
-        # self.version_edit.setVisible(False)
-        # self.port_box.setVisible(False)
-        # self.baudrate_box.setVisible(False)
-
-        ##############################################
-
         self.vals_button.setVisible(False)
         self.version_button.setVisible(False)
         self.value_edit.setVisible(False)
@@ -132,7 +118,7 @@ class App(QMainWindow):
         self.refresh_button.setVisible(False)
     
         self.result_label.setVisible(False)
-        # self.save_button.setVisible(False)
+        self.save_button.setVisible(False)
         self.id_Edit.setVisible(False)
         self.Final_result_box.setVisible(False)
         self.ch_button.setVisible(False)
@@ -205,12 +191,15 @@ class App(QMainWindow):
             self.start_button.setText("STEP2")
         elif self.start_button.text() == 'STEP2':
             self.on_button_click('images_/images/board_on_mat.jpg')
-            self.info_label.setText('Nachdem Sie die 4 Schrauben angebracht haben,\n\negen Sie die Platine wieder auf die ESD-Matte und drücken Sie dann "STEP3".')
+            self.info_label.setText('Nachdem Sie die 4 Schrauben angebracht haben,\n\n legen Sie die Platine wieder auf die ESD-Matte und\n\n drücken Sie dann "STEP3".')
             self.start_button.setText("STEP3")
         elif self.start_button.text()=='STEP3':
             self.on_button_click('images_/images/board_with_cabels.jpg')
             self.info_label.setText('Schließen Sie die Stromkabel an die Platine an (siehe Abbildung).\n\n\nDrücken Sie STEP4.')
             self.start_button.setText("STEP4")
+            item = QTableWidgetItem('STEP4')
+            self.tableWidget.setItem(0, 1, item)
+
         elif self.start_button.text()=='STEP4':
             self.on_button_click('images_/icons/next.jpg')
         elif self.start_button.text()=='NEXT':
@@ -227,20 +216,23 @@ class App(QMainWindow):
             time.sleep(1)
             self.calc_voltage_before_jumper()
             self.result_label.setStyleSheet("")
+
         elif self.start_button.text()=='SPANNUNG':
             self.start_button.setEnabled(False)
             time.sleep(0.5)
             self.voltage_before_jumper = self.voltage_find_before_jumper()
             atmpt = 0
             while not ( 3.25 < self.voltage_before_jumper < 3.35):
+                self.result_label.setStyleSheet("background-color: red;")
+                self.result_label.setText('Voltage before Jumper\n\n'+str(self.voltage_before_jumper)+'V')
+                QMessageBox.information(self, 'Information', 'wrong Voltage.')
                 atmpt += 1
                 time.sleep(0.5)
                 self.voltage_before_jumper = self.voltage_find_before_jumper()
             if 3.25 < self.voltage_before_jumper < 3.35:
                 QMessageBox.information(self, 'Information', 'Die Spannung zwischen GND und R709 liegt zwischen 3,25 und 3,35. Dies ist ein guter Wert. Fahren Sie fort, indem Sie die Taste NEXT drücken.')
-            else:
-                QMessageBox.information(self, 'Information', 'Falsche Spannung.Überprüfen Sie die Anschlüsse erneut und prüfen Sie die Spannung zwischen GND und R709.')
                 self.start_button.setText('SPANNUNG')
+
             self.start_button.setEnabled(True)
             self.result_label.setStyleSheet("")
             self.start_button.setText('POWER OFF')
@@ -334,13 +326,14 @@ class App(QMainWindow):
         self.multimeter.write('CONF:VOLT:DC 5')
         voltage = float(self.multimeter.query('READ?'))
         time.sleep(2)
-        if 3.25 < voltage < 3.35:
-            self.result_label.setStyleSheet("background-color: green;")
-            self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
-        else:
-            self.result_label.setStyleSheet("background-color: red;")
-            self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
-            QMessageBox.information(self, 'Information', 'Wrong Voltage. Check Connections again.')
+        # if 3.25 < voltage < 3.35:
+        #     self.result_label.setStyleSheet("background-color: green;")
+        #     self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
+        # else:
+        #     self.result_label.setStyleSheet("background-color: red;")
+        #     self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
+        #     # QMessageBox.information(self, 'Information', 'Wrong Voltage. Check Connections again.')
+        #     print(voltage)
         return voltage
 
     def channelSet(self):
