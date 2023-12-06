@@ -152,7 +152,7 @@ selection-color: rgb(0, 85, 255);</string>
        <x>355</x>
        <y>0</y>
        <width>151</width>
-       <height>121</height>
+       <height>55</height>
       </rect>
      </property>
      <property name="font">
@@ -362,6 +362,35 @@ selection-color: rgb(0, 85, 255);</string>
        <string>Parallel</string>
       </property>
      </item>
+    </widget>
+    <widget class="QPushButton" name="btn_display_images">
+     <property name="geometry">
+      <rect>
+       <x>355</x>
+       <y>65</y>
+       <width>151</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>Show Images</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+     <property name="autoDefault">
+      <bool>false</bool>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="widget_2" native="true">
@@ -963,16 +992,14 @@ selection-color: rgb(0, 85, 255);</string>
      <string>File</string>
     </property>
     <addaction name="actionNew"/>
-    <addaction name="actionLoad"/>
+    <addaction name="actionExit"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
-    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionVoltage_Test"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -995,7 +1022,7 @@ selection-color: rgb(0, 85, 255);</string>
     <string>New</string>
    </property>
   </action>
-  <action name="actionLoad">
+  <action name="actionExit">
    <property name="text">
     <string>Load</string>
    </property>
@@ -1013,16 +1040,6 @@ selection-color: rgb(0, 85, 255);</string>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
-   </property>
-  </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
-  <action name="actionVoltage_Test">
-   <property name="text">
-    <string>Voltage Test</string>
    </property>
   </action>
  </widget>

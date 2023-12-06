@@ -344,12 +344,12 @@ class MultimeterApp(QMainWindow):
         self.text_browser_ac.append(result)
         res = result.split(' ')
         print(float(res[0]))
-        if 0.13 < float(res[0]) < 0.15:
-            self.ac_voltlabel.setStyleSheet("background-color: red;")
-            self.ac_voltlabel.setText(result)
-        else:
-            self.ac_voltlabel.setStyleSheet("background-color: green;")
-            self.ac_voltlabel.setText(result)
+        # if 0.13 < float(res[0]) < 0.15:
+        #     self.ac_voltlabel.setStyleSheet("background-color: red;")
+        self.ac_voltlabel.setText(result)
+        # else:
+        #     self.ac_voltlabel.setStyleSheet("background-color: green;")
+        # self.ac_voltlabel.setText(result)
 
     def display_next_image(self):
         if self.image_index < len(self.test_images):
@@ -374,12 +374,8 @@ class MultimeterApp(QMainWindow):
                     return
             elif self.image_index == 2:
                 acv_val = self.ac_voltlabel.text()
-                acv_value = acv_val.split(' ')
-                print('ACV 0', float(acv_value[0]))
-                acv_value_ = float(acv_value[0])
-                if not (0.013 <= acv_value_ <= 0.016):
-                    QMessageBox.information(self, "DC Voltage Out of Range", "step 3 ---- index 2.")
-                    return
+                QMessageBox.information(self, "DC Voltage Out of Range", "step 3 ---- index 2.")
+
             elif self.image_index == 3:
                 acv_val = self.ac_voltlabel.text()
                 acv_value = acv_val.split(' ')

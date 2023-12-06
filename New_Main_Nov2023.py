@@ -5,6 +5,44 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+
+
+class MultimeterThread(QThread):
+    measurement_completed = pyqtSignal(str)
+    dcv_volatge = pyqtSignal(str)
+    acv_volatge = pyqtSignal(str)
+
+    def __init__(self, resource_name):
+        super().__init__()
+        self.multimeter = resource_name
+        self.running = True
+
+    def run(self):
+        try:
+            self.multimeter.write('ROUTe:SCAN 1')
+            self.multimeter.write('ROUTe:START ON')
+            self.multimeter.write('ROUTe:FUNC SCAN')
+            self.multimeter.write('ROUTe:LIMI:HIGH 3')
+            self.multimeter.write('ROUTe:LIMI:LOW 2')
+            time.sleep(2)
+            self.multimeter.write('ROUT:CHAN 2,ON,ACV,AUTO,FAST')
+            self.multimeter.write('ROUT:CHAN 3,ON,DCV,AUTO,FAST')
+            while self.running:
+                ACV_Volt = self.multimeter.query('ROUTe:DATA? 2')
+                DCV_Volt = self.multimeter.query('ROUTe:DATA? 3')
+                self.dcv_volatge.emit(DCV_Volt)
+                self.acv_volatge.emit(ACV_Volt)
+                time.sleep(1)  # Adjust the sleep duration to control update frequency
+
+            scan_OFF = self.multimeter.query('ROUTe:STATe?')
+            self.multimeter.write('ROUTe:SCAN 0')
+            self.measurement_completed.emit(scan_OFF)
+        except AttributeError:
+            print('error occurred')
+
+    def stop(self):
+        self.running = False
+
 class WorkerThread(QThread):
     process_completed = pyqtSignal()
     result_signal = pyqtSignal(str)
@@ -87,18 +125,12 @@ class App(QMainWindow):
         # self.timer = QTimer(self)
         # self.timer.timeout.connect(self.update_time_label)
         # self.timer.start(1000)
-
-        self.voltage_timer = QTimer(self)
-        # self.voltage_timer.timeout.connect(self.check_voltage_stability)
-        # Initialize voltage values
-        self.previous_voltage1  = 0.0
         ########################################################################################################
         self.rm = visa.ResourceManager()
         self.multimeter = None
         self.powersupply = None
         # self.test_button.clicked.connect(self.on_cal_voltage_current)
-        # self.test_button.clicked.connect(self.change_image)
-        self.test_button.clicked.connect(self.measure_voltage)
+        self.test_button.clicked.connect(self.start_measurements)
         ########################################################################################################
         self.config_file = configparser.ConfigParser()
         self.config_file.read('conf_igg.ini')
@@ -129,29 +161,27 @@ class App(QMainWindow):
         self.Final_result_box.setVisible(False)
         self.ch_button.setVisible(False)
         self.channel_combobox.setVisible(False)
+
         # self.firstMessage()
         self.on_button_click('images_/images/PP1.jpg')
         self.info_label.setText('Welcome \n \n Drücken Sie die Taste START.')
+
+
+        self.image_timer = QTimer(self)
+        self.image_timer.timeout.connect(self.display_next_image)
+        # self.btn_display_images.clicked.connect(self.start_image_display)
         ########################################################################################################
+
+
         # self.save_button.clicked.connect(self.create_ini_file)
+
+
         self.test_images = ['images_/images/R700.jpg','images_/images/R709_before_jumper.jpg','images_/images/R700_DC.jpg', 'images_/images/PP2.png','images_/images/C443.jpg','images_/images/C442.jpg','images_/images/C441.jpg','images_/images/C412.jpg',
                             'images_/images/C430.jpg','images_/images/C443_1.jpg','images_/images/C442_1.jpg','images_/images/C441_1.jpg','images_/images/C412_1.jpg','images_/images/C430_1.jpg', 'images_/images/PP.jpg',]
         self.test_index = 0
         self.DCV_readings = [0,0,0,0,0,0,0]
         self.ACV_readings = [0,0,0,0,0,0,0]
         #########################################################################self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')###############################
-    def measure_voltage(self):
-            while True:
-                measured_voltage = float(self.multimeter.query(":MEASure:VOLTage:DC?").strip())
-                if 3.25 <= measured_voltage <= 3.35:
-                    print(f"DC Voltage: {measured_voltage}V (Within specified range)")
-                    time.sleep(2)
-                    measured_ac_voltage = float(self.multimeter.query(":MEASure:VOLTage:AC?").strip())
-                    print(f"AC Voltage: {measured_ac_voltage}V")
-                    break
-                else:
-                    print(f"DC Voltage: {measured_voltage}V (Outside specified range)")
-
     def firstMessage(self):
         msgBox = QMessageBox()
         msgBox.setWindowIcon(QIcon('images_/icons/icon.png'))
@@ -219,7 +249,7 @@ class App(QMainWindow):
             self.info_label.setText("Sie können MULTIMETER Name auf TextBox sehen.\n\nDrücken Sie die Taste MULTI ON, wenn sie erscheint.")
             self.start_button.setEnabled(False)
             self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
-            self.start_button.setText('MULTI ON')            
+            self.start_button.setText('MULTI ON')
             self.on_button_click('images_/images/PP9.jpg')
         elif self.start_button.text()=='MULTI ON':
             self.connect_multimeter()
@@ -335,8 +365,175 @@ class App(QMainWindow):
             self.on_button_click('images_/images/Start2.png')
             QMessageBox.information(self, "Important", "Read and watch the image clearly and do the process carefully.")
 
-        ########################################################################################################
+#####################################################################################################################################################
+    def start_measurements(self):
+        th = MultimeterThread(self.multimeter)
+        th.dcv_volatge.connect(self.on_dc_measurement_completed)
+        th.acv_volatge.connect(self.on_ac_measurement_completed)
+        th.start()
+        self.multimeter_thread = th
 
+    def on_dc_measurement_completed(self, result):
+        self.textBrowser.append('DC Volt '+result)
+        self.dc_voltlabel.setText(result)
+
+    def on_ac_measurement_completed(self, result):
+        self.textBrowser.append('AC Volt '+result)
+        # res = result.split(' ')
+        # # print(float(res[0]))
+        # # if 0.13 < float(res[0]) < 0.15:
+        # #     self.ac_voltlabel.setStyleSheet("background-color: red;")
+        self.ac_voltlabel.setText(result)
+        # # else:
+        # #     self.ac_voltlabel.setStyleSheet("background-color: green;")
+        # #     self.ac_voltlabel.setText(result)
+
+    def display_next_image(self):
+        if self.image_index < len(self.test_images):
+            image_path = self.test_images[self.image_index]
+            pixmap = QPixmap(image_path)
+            self.image_label.setPixmap(pixmap)
+            if self.image_index == 0:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 0', float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (3.25 < dcv_value_ < 3.35):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 1 ---- index 0.")
+                    return
+                
+            elif self.image_index == 1:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (4.95 <= dcv_value_ <= 5.05):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 2 ---- index 1.")
+                    return
+            elif self.image_index == 2:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 0', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.01):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 3 ---- index 2.")
+                    return
+            elif self.image_index == 3:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.01):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 4 ---- index 3.")
+                    return
+                
+            elif self.image_index == 4:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                QMessageBox.information(self, "DC Voltage Out of Range", "step 5 ---- index 4.")
+                
+
+            elif self.image_index == 5:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (11.95 <= dcv_value_ <= 12.05):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 5 ---- index 4.")
+                    return
+                
+            elif self.image_index == 6:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (4.95 <= dcv_value_ <= 5.05):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 6 ---- index 5.")
+                    return
+            elif self.image_index == 7:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (4.95 <= dcv_value_ <= 5.05):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 7 ---- index 6.")
+                    return
+            elif self.image_index == 8:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (4.98 <= dcv_value_ <= 5.02):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 8 ---- index 7.")
+                    return
+
+            elif self.image_index == 9:
+                dcv_val = self.dc_voltlabel.text()
+                dcv_value = dcv_val.split(' ')
+                print('DCV 1',float(dcv_value[0]))
+                dcv_value_ = float(dcv_value[0])
+                if not (2.046 <= dcv_value_ <= 2.050):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 9 ---- index 8.")
+                    return
+            elif self.image_index == 10:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.01):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 10 ---- index 9.")
+                    return
+            elif self.image_index == 11:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.005):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 11 ---- index 10.")
+                    return
+            elif self.image_index == 12:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.005):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 12 ---- index 11.")
+                    return
+            elif self.image_index == 13:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.001):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 13 ---- index 12.")
+                    return
+            elif self.image_index == 14:
+                acv_val = self.ac_voltlabel.text()
+                acv_value = acv_val.split(' ')
+                print('ACV 1', float(acv_value[0]))
+                acv_value_ = float(acv_value[0])
+                if not (acv_value_ < 0.001):
+                    QMessageBox.information(self, "DC Voltage Out of Range", "step 14 ---- index 13.")
+                    return
+
+            self.image_index += 1
+        else:
+            self.image_timer.stop()
+
+    def start_image_display(self):
+        self.image_index = 0
+        self.image_timer.start(10000)  # Display each image for 10 seconds
+
+    def closeEvent(self, event):
+        if hasattr(self, 'multimeter_thread'):
+            self.multimeter_thread.stop()
+            self.multimeter_thread.wait()
+
+
+
+###################################################################################################################################################################
     def voltage_find_before_jumper(self):
         self.multimeter.write('CONF:VOLT:DC 5')
         voltage = float(self.multimeter.query('READ?'))
@@ -480,7 +677,7 @@ class App(QMainWindow):
     def show_good_message(self, message):
         self.timer1 = QTimer()
         self.timer1.timeout.connect(self.enable_button)
-        self.timer1.start(1000)
+        self.timer1.start(10000)
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Question)
         msgBox.setText(message)
@@ -497,437 +694,6 @@ class App(QMainWindow):
         self.image_timer.timeout.connect(self.change_image)
         self.image_timer.start(3000)
 
-    def change_image(self):
-        QMessageBox.information(self, "Information", "See the Image for component reference. Place the leads exactly as shown in the image and place for minimum 3 seconds")
-        while self.test_index < len(self.test_images):
-            time.sleep(1)
-    
-            if self.test_index == 0:
-                self.DCV_readings[0] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[0]))
-                self.tableWidget.setItem(7,2,QTableWidgetItem(str(self.DCV_readings[0])))
-                if 3.25 <= self.DCV_readings[0] < 3.35:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/R709.jpg')
-                        self.test_index = 0
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-            
-            elif self.test_index == 1:
-                self.DCV_readings[1] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[1]))
-                self.tableWidget.setItem(8,2,QTableWidgetItem(str(self.DCV_readings[1])))
-                if 4.95 <= self.DCV_readings[1] < 5.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/R700.jpg')
-                        self.test_index = 1
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 2:
-                self.ACV_readings[0] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[0]))
-                self.tableWidget.setItem(9,2,QTableWidgetItem(str(self.ACV_readings[0])))
-                if self.ACV_readings[0] < 0.01:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/R709.jpg')
-                        self.test_index = 2
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 3:
-                self.ACV_readings[1] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[1]))
-                self.tableWidget.setItem(10,2,QTableWidgetItem(str(self.ACV_readings[1])))
-                if self.ACV_readings[1] < 0.01:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/R709.jpg')
-                        self.test_index = 3
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 4:
-                response = QMessageBox.question(self, "Retry", "Change the GND from Normal to ISOGND?", QMessageBox.Yes | QMessageBox.No)
-                if response == QMessageBox.No:
-                    self.on_button_click('images_/images/Welcome.jpg')
-                    self.test_index = 4
-                    self.change_image()
-                elif response == QMessageBox.Yes:
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                    # self.test_index += 1
-
-            elif self.test_index == 5:
-                self.DCV_readings[2] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[2]))
-                self.tableWidget.setItem(11,2,QTableWidgetItem(str(self.DCV_readings[2])))
-                if 11.95 < self.DCV_readings[2] < 12.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C443.jpg')
-                        self.test_index = 5
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 6:
-                self.DCV_readings[3] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[3]))
-                self.tableWidget.setItem(12,2,QTableWidgetItem(str(self.DCV_readings[3])))
-                if 4.95 <= self.DCV_readings[3] < 5.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C442.jpg')
-                        self.test_index = 6
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 7:
-                self.DCV_readings[4] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[4]))
-                self.tableWidget.setItem(13,2,QTableWidgetItem(str(self.DCV_readings[4])))
-                if 4.95 <= self.DCV_readings[4] < 5.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C441.jpg')
-                        self.test_index = 7
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 8:
-                self.DCV_readings[5] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[5]))
-                self.tableWidget.setItem(14,2,QTableWidgetItem(str(self.DCV_readings[5])))
-                if 4.98 <= self.DCV_readings[5] < 5.02:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C412.jpg')
-                        self.test_index = 8
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 9:
-                self.DCV_readings[6] = max(self.DC_voltage_R709_R700())
-                self.result_label.setText(str(self.DCV_readings[6]))
-                self.tableWidget.setItem(15,2,QTableWidgetItem(str(self.DCV_readings[6])))
-                if 2.046 <= self.DCV_readings[6] < 2.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "DC Voltage at R700 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C430.jpg')
-                        self.test_index = 9
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 10:
-                self.ACV_readings[2] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[2]))
-                self.tableWidget.setItem(16,2,QTableWidgetItem(str(self.ACV_readings[2])))
-                if self.ACV_readings[2] < 0.01:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C443.jpg')
-                        self.test_index = 10
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 11:
-                self.ACV_readings[3] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[3]))
-                self.tableWidget.setItem(17,2,QTableWidgetItem(str(self.ACV_readings[3])))
-                if self.ACV_readings[3] < 0.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C442.jpg')
-                        self.test_index = 11
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 12:
-                self.ACV_readings[4] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[4]))
-                self.tableWidget.setItem(18,2,QTableWidgetItem(str(self.ACV_readings[4])))
-                if self.ACV_readings[4] < 0.05:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C441.jpg')
-                        self.test_index = 12
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 13:
-                self.ACV_readings[5] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[5]))
-                self.tableWidget.setItem(19,2,QTableWidgetItem(str(self.ACV_readings[5])))
-                if self.ACV_readings[5] < 0.001:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C412.jpg')
-                        self.test_index = 13
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-
-            elif self.test_index == 14:
-                self.ACV_readings[6] = max(self.AC_voltage_R709_R700())
-                self.result_label.setText(str(self.ACV_readings[6]))
-                self.tableWidget.setItem(20,2,QTableWidgetItem(str(self.ACV_readings[6])))
-                if self.ACV_readings[6] < 0.001:
-                    self.result_label.setStyleSheet("background-color: green;")
-                    self.on_button_click(self.test_images[self.test_index])
-                    QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
-                else:
-                    self.result_label.setStyleSheet("background-color: red;")
-                    response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?", QMessageBox.Yes | QMessageBox.No)
-                    if response == QMessageBox.Yes:
-                        self.on_button_click('images_/images/C430.jpg')
-                        self.test_index = 14
-                        self.change_image()
-                    elif response == QMessageBox.No:
-                        self.on_button_click(self.test_images[self.test_index])
-                        QMessageBox.information(self, "Important", "You are proceeding further even after having some invalid voltage values at R709 component.")
-                        # self.test_index += 1
-            # image_name = self.test_images[self.test_index]
-            # self.on_button_click(image_name)
-
-            # if self.test_index == 0:
-            #     # start_time = time.time()
-            #     # while True:
-            #     self.DCV_readings[0] = self.DC_voltage_R709()
-            #     self.result_label.setText(str(self.DCV_readings[0]))
-            #     if 3.25 < self.DCV_readings[0] < 3.35:
-            #         self.result_label.setStyleSheet("background-color: green;")
-            #         QMessageBox.information(self, "Information", "Voltage R709 has been good. Check the image and validate the voltage at next component.")
-            #     else:
-            #         self.result_label.setStyleSheet("background-color: red;")
-            #         # break
-            #         response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?",
-            #                                         QMessageBox.Yes | QMessageBox.No)
-            #         if response == QMessageBox.Yes:
-            #             self.on_button_click('images_/images/R709.jpg')
-            #             self.test_index = 0
-            #         if response == QMessageBox.No:
-            #             print('test index = 0')
-                    
-                # self.DCV_readings[0] = self.DC_voltage_R709()
-                # self.result_label.setText(str(self.DCV_readings[0]))
-                # if 3.25 < self.DCV_readings[0] < 3.35:
-                #     self.result_label.setStyleSheet("background-color: green;")
-                # else:
-                #     self.result_label.setStyleSheet("background-color: red;")
-                #     QMessageBox.information(self, "Information", "Check the Image to measure component.")
-                # QMessageBox.information(self, "Information", "Voltage R709 has been good. Check the image and validate the voltage at next component.")
-
-
-
-            # elif self.test_index == 1:
-            #     while True:
-            #         self.DCV_readings[1] = self.DC_voltage_R700()
-            #         self.result_label.setText(str(self.DCV_readings[1]))
-            #         if 4.95 < self.DCV_readings[1] < 5.05:
-            #             self.result_label.setStyleSheet("background-color: green;")
-            #             QMessageBox.information(self, "Information", "Voltage R700 has been good. Check the image and validate the voltage at next component.")
-            #             break
-            #         else:
-            #             self.result_label.setStyleSheet("background-color: red;")
-            #             response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?",
-            #                                             QMessageBox.Yes | QMessageBox.No)
-            #             if response == QMessageBox.No:
-            #                 break
-                
-
-
-            # elif self.test_index == 2:
-            #     while True:
-            #         self.ACV_readings[0] = self.AC_voltage_R709_R700()
-            #         self.result_label.setText(str(self.ACV_readings[0]))
-            #         if self.ACV_readings[1] < 0.01:
-            #             self.result_label.setStyleSheet("background-color: green;")
-            #             QMessageBox.information(self, "Information", "Voltage R700 has been good. Check the image and validate the voltage at next component.")
-            #             break
-            #         else:
-            #             self.result_label.setStyleSheet("background-color: red;")
-            #             response = QMessageBox.question(self, "Retry", "Voltage reading is out of range. Retry?",
-            #                                             QMessageBox.Yes | QMessageBox.No)
-            #             if response == QMessageBox.No:
-            #                 break
-
-
-
-                ####################################################################################################################################
-                self.test_button.setVisible(False)
-                self.start_button.setText('NEXTT')
-                self.start_button.setVisible(True)
-            self.test_index += 1
-    ############################################################################################################################################
-    # def DC_voltage_R709(self):
-    #     time.sleep(1)
-    #     self.multimeter.write('CONF:VOLT:DC 10')
-    #     voltage_reading = float(self.multimeter.query('READ?'))
-    #     time.sleep(1)
-    #     measurements_1 = []
-    #     match_count = 0
-    #     for i in range(10):
-    #         voltage = float(self.multimeter.query('READ?'))
-    #         measurements_1.append(voltage)
-    #         if 3.25 < voltage < 3.35:
-    #             match_count += 1
-    #         else:
-    #             self.textBrowser.append('Not in the range')
-    #         time.sleep(1)
-    #     voltage_reading = max(measurements_1)
-    #     print(voltage_reading)
-    #     return voltage_reading
-    
-
-    def DC_voltage_R709_R700(self):
-        time.sleep(2)
-        voltage_readings = []
-        for _ in range(20):
-            self.multimeter.write('CONF:VOLT:DC 10')
-            voltage_reading = self.multimeter.query('READ?')
-            voltage_readings.append(float(voltage_reading))
-            print(voltage_readings)
-        return voltage_readings
-
-    def AC_voltage_R709_R700(self):
-        time.sleep(2)
-        voltage_readings = []
-        for _ in range(20):
-            self.multimeter.write('CONF:VOLT:AC 1')
-            voltage_reading = self.multimeter.query('READ?')
-            voltage_readings.append(float(voltage_reading))
-            print(voltage_readings)
-        return voltage_readings
-    
-    
-    # def DC_voltage_R700(self):
-    #     time.sleep(3)        
-    #     self.multimeter.write('CONF:VOLT:DC 10')
-    #     voltage_reading = float(self.multimeter.query('READ?'))
-    #     time.sleep(1)
-    #     # measurements = []
-    #     # match_count = 0
-
-
-
-    #     # for i in range(10):
-    #     #     voltage = float(self.multimeter.query('READ?'))
-    #     #     measurements.append(voltage)
-    #     #     if 4.95 < voltage < 5.05:
-    #     #         match_count += 1
-    #     #     else:
-    #     #         self.textBrowser.append('Not in the range')
-    #     #     time.sleep(1)
-    #     # print(measurements)
-    #     # voltage_reading = max(measurements)
-    #     print(voltage_reading)
-    #     return voltage_reading
 
     ########################################################################################################
     def update_time_label(self):
