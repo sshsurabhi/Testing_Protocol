@@ -39,10 +39,10 @@ class MyGUI(QWidget):
         self.powersupply = None
 
         self.measure_timer = QTimer(self)
-        self.measure_count = 0
-        self.attempt_count = 0
-        self.dc_measure_count = 0
-        self.ac_measure_count = 0
+        # self.measure_count = 0
+        # self.attempt_count = 0
+        # self.dc_measure_count = 0
+        # self.ac_measure_count = 0
 
         self.DCV_Results = [0,0,0,0,0,0,0]
         self.ACV_Results = [0,0,0,0,0,0,0]
@@ -66,7 +66,7 @@ class MyGUI(QWidget):
 
     def connect_powersupply(self):
         self.show_message('Power Supply connected!')
-
+########################################################################################################################
     def start_continuous_measurement(self):
         self.textBrowser.append('Measure according to the image..')
         self.label_image.setPixmap(QPixmap('images_/images/R709_.jpg'))
@@ -76,16 +76,16 @@ class MyGUI(QWidget):
         self.dc_measure_count = 0
         self.ac_measure_count = 0
         self.is_ac_measurement = False
-        time.sleep(5)
         self.measure()
-
+########################################################################################################################
     def measure(self):
         try:            
             if not self.is_ac_measurement:
                 dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                 self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
+                self.line_edit.setText(str(dc_voltage))
                 if self.dc_measure_count==0:# and self.attempt_count<=3:
-                    self.line_edit.setText(str(dc_voltage))
+                    # self.line_edit.setText(str(dc_voltage))
                     if 3.25 <= dc_voltage <= 3.35:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/R709_.jpg'))
@@ -104,7 +104,7 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 1:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
+                    # self.line_edit.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/R700.jpg'))
@@ -131,8 +131,8 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 2:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count - 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
-                    if 11.95 <= dc_voltage <= 12.05:
+                    # self.line_edit.setText(str(dc_voltage))
+                    if 11.90 <= dc_voltage <= 12.10:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/C443.jpg'))
                         self.DCV_Results[2] = dc_voltage
@@ -150,7 +150,7 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 3:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count - 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
+                    # self.line_edit.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/C442.jpg'))
@@ -169,7 +169,7 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 4:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count - 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
+                    # self.line_edit.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/C441.jpg'))
@@ -188,8 +188,8 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 5:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count - 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
-                    if 4.98 <= dc_voltage <= 5.02:
+                    # self.line_edit.setText(str(dc_voltage))
+                    if 4.95 <= dc_voltage <= 5.05:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/C412.jpg'))
                         self.DCV_Results[5] = dc_voltage
@@ -207,7 +207,7 @@ class MyGUI(QWidget):
                 elif self.dc_measure_count == 6:
                     # dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     # self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count - 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.line_edit.setText(str(dc_voltage))
+                    # self.line_edit.setText(str(dc_voltage))
                     if 2.046 <= dc_voltage <= 2.050:
                         self.line_edit.setStyleSheet('background-color: green;')
                         self.label_image.setPixmap(QPixmap('images_/images/C430.jpg'))

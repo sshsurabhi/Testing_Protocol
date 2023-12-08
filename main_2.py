@@ -218,7 +218,7 @@ class App(QMainWindow):
         elif self.start_button.text()=='NEXT':
             self.info_label.setText("Sie können MULTIMETER Name auf TextBox sehen.\n\nDrücken Sie die Taste MULTI ON, wenn sie erscheint.")
             self.start_button.setEnabled(False)
-            self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
+            # self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
             self.start_button.setText('MULTI ON')            
             self.on_button_click('images_/images/PP9.jpg')
         elif self.start_button.text()=='MULTI ON':
@@ -480,7 +480,7 @@ class App(QMainWindow):
     def show_good_message(self, message):
         self.timer1 = QTimer()
         self.timer1.timeout.connect(self.enable_button)
-        self.timer1.start(1000)
+        self.timer1.start(10000)
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Question)
         msgBox.setText(message)

@@ -67,6 +67,10 @@ selection-color: rgb(0, 85, 255);</string>
       <stylestrategy>NoAntialias</stylestrategy>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(111, 111, 101);
+border-radius : 15px;</string>
+    </property>
     <property name="frameShape">
      <enum>QFrame::Box</enum>
     </property>
@@ -99,6 +103,10 @@ selection-color: rgb(0, 85, 255);</string>
       <bold>false</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
+    </property>
     <property name="frameShape">
      <enum>QFrame::WinPanel</enum>
     </property>
@@ -126,7 +134,7 @@ selection-color: rgb(0, 85, 255);</string>
       <rect>
        <x>5</x>
        <y>0</y>
-       <width>141</width>
+       <width>321</width>
        <height>121</height>
       </rect>
      </property>
@@ -138,170 +146,21 @@ selection-color: rgb(0, 85, 255);</string>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(111, 111, 101);
+      <string notr="true">background-color: rgb(179, 99, 9);
 border-radius : 15px;</string>
      </property>
      <property name="text">
       <string>START</string>
      </property>
      <property name="checkable">
-      <bool>true</bool>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="test_button">
-     <property name="geometry">
-      <rect>
-       <x>355</x>
-       <y>0</y>
-       <width>151</width>
-       <height>121</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>14</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(111, 111, 101);
-border-radius : 15px;</string>
-     </property>
-     <property name="text">
-      <string>GO</string>
-     </property>
-     <property name="checkable">
       <bool>false</bool>
-     </property>
-     <property name="autoDefault">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="value_edit">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>40</y>
-       <width>131</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="inputMask">
-      <string notr="true"/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="version_button">
-     <property name="geometry">
-      <rect>
-       <x>150</x>
-       <y>80</y>
-       <width>71</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Panel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="text">
-      <string>Version</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="vals_button">
-     <property name="geometry">
-      <rect>
-       <x>150</x>
-       <y>40</y>
-       <width>71</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Panel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="text">
-      <string>ValS</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="version_edit">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>80</y>
-       <width>131</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="ch_button">
      <property name="geometry">
       <rect>
-       <x>150</x>
-       <y>0</y>
+       <x>360</x>
+       <y>30</y>
        <width>71</width>
        <height>41</height>
       </rect>
@@ -312,6 +171,10 @@ border-radius : 15px;</string>
        <weight>75</weight>
        <bold>true</bold>
       </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::Panel</enum>
@@ -332,8 +195,8 @@ border-radius : 15px;</string>
     <widget class="QComboBox" name="channel_combobox">
      <property name="geometry">
       <rect>
-       <x>220</x>
-       <y>0</y>
+       <x>330</x>
+       <y>70</y>
        <width>131</width>
        <height>41</height>
       </rect>
@@ -347,6 +210,10 @@ border-radius : 15px;</string>
      </property>
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <item>
       <property name="text">
@@ -404,13 +271,13 @@ border-radius : 15px;</string>
 border-radius : 15px;</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Panel</enum>
+      <enum>QFrame::WinPanel</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
      <property name="lineWidth">
-      <number>0</number>
+      <number>3</number>
      </property>
      <property name="text">
       <string/>
@@ -446,7 +313,8 @@ border-radius : 15px;</string>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <property name="text">
       <string>Refresh</string>
@@ -472,7 +340,8 @@ border-radius : 15px;</string>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <property name="text">
       <string>Connect</string>
@@ -498,7 +367,7 @@ border-radius : 15px;</string>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(111, 111, 101);
+      <string notr="true">background-color: rgb(179, 99, 9);
 border-radius : 15px;</string>
      </property>
      <property name="frameShape">
@@ -536,6 +405,10 @@ border-radius : 15px;</string>
      <property name="layoutDirection">
       <enum>Qt::RightToLeft</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
+     </property>
     </widget>
     <widget class="QLabel" name="baudrate_label">
      <property name="geometry">
@@ -554,7 +427,7 @@ border-radius : 15px;</string>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(111, 111, 101);
+      <string notr="true">background-color: rgb(179, 99, 9);
 border-radius : 15px;</string>
      </property>
      <property name="frameShape">
@@ -591,6 +464,10 @@ border-radius : 15px;</string>
      </property>
      <property name="layoutDirection">
       <enum>Qt::RightToLeft</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <item>
       <property name="text">
@@ -701,6 +578,10 @@ border-radius : 15px;</string>
        <bold>true</bold>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(111, 111, 101);
+border-radius : 15px;</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Panel</enum>
      </property>
@@ -730,6 +611,10 @@ border-radius : 15px;</string>
        <bold>true</bold>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Panel</enum>
      </property>
@@ -758,6 +643,10 @@ border-radius : 15px;</string>
        <weight>75</weight>
        <bold>true</bold>
       </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(179, 99, 9);
+border-radius : 15px;</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::Panel</enum>

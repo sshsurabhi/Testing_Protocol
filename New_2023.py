@@ -61,8 +61,6 @@ class SerialPortThread(QThread):
                 pass
         self.com_ports_available.emit(com_ports)
 ##################################################################################################################################
-
-
 class App(QMainWindow):
     def __init__(self):
         super(App, self).__init__()
@@ -86,16 +84,16 @@ class App(QMainWindow):
                     'i2c:scan', 'i2c:write:4F:06990918', 'i2c:write:4F:01F8', 'i2c:read:4F:1E:00']
         self.start_button.clicked.connect(self.connect)
         ########################################################################################################
-        # self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.update_time_label)
-        # self.timer.start(1000)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_time_label)
+        self.timer.start(1000)
         ########################################################################################################
         self.rm = visa.ResourceManager()
         self.multimeter = None
         self.powersupply = None
 
         self.test_button.clicked.connect(self.start_continuous_measurement)
-        self.actionLoad.triggered.connect(self.start_continuous_measurement)
+        self.actionLoad.triggered.connect(self.showDialog)
         ########################################################################################################
         self.config_file = configparser.ConfigParser()
         self.config_file.read('conf_igg.ini')
@@ -166,6 +164,31 @@ class App(QMainWindow):
             self.title_label.setText('Preparation Test')
             self.info_label.setText("Drücken Sie die Taste 'START'.")
             self.on_button_click('images_/images/PP1.jpg')
+########################################################################################################
+    def showDialog(self):
+        fname, _ = QFileDialog.getOpenFileName(self, 'Open file', '/', 'INI Files (*.ini);;All Files (*)')
+        if fname:
+            self.loadConfigFile(fname)
+    def loadConfigFile(self, filename):
+        config = configparser.ConfigParser()
+        config.read(filename)
+        missing_attributes = []
+        for section in config.sections():
+            for key, value in config.items(section):
+                if not value.strip():
+                    missing_attributes.append(f"{key} in section {section}")
+        if missing_attributes:
+            message = "The following attributes are missing or empty in the config file:\n"
+            message += "\n".join(missing_attributes)
+            message += "\n\nPlease fill in the missing values and try again."
+            QMessageBox.warning(self, "Missing Attributes", message, QMessageBox.Ok)
+        else:
+            self.model_num = config.get('Settings', 'Model Num')
+            self.version_num = config.get('Settings', 'Version Num')
+            self.serial_num = config.get('Settings', 'Serial Num')
+            self.supply_voltage = config.get('Power Supply', 'Supply_Voltage')
+            print(self.model_num, self.version_num, self.serial_num, self.supply_voltage)
+
     ########################################################################################################
     def on_button_click(self, file_path):
         if file_path:
@@ -208,7 +231,7 @@ class App(QMainWindow):
         elif self.start_button.text()=='NEXT':
             self.info_label.setText("Sie können MULTIMETER Name auf TextBox sehen.\n\nDrücken Sie die Taste MULTI ON, wenn sie erscheint.")
             self.start_button.setEnabled(False)
-            # self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
+            self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
             self.start_button.setText('MULTI ON')            
             self.on_button_click('images_/images/PP9.jpg')
             self.show_input_dialog()
@@ -237,7 +260,7 @@ class App(QMainWindow):
                 self.result_label.setStyleSheet("background-color: green;")
                 self.start_button.setText('SPANNUNG')
                 self.result_label.setText('Voltage before Jumper\n\n'+str(self.voltage_before_jumper)+'V')
-                #QMessageBox.information(self, 'Information', 'Die Spannung zwischen GND und R709 liegt zwischen 3,25 und 3,35. Dies ist ein guter Wert. Fahren Sie fort, indem Sie die Taste NEXT drücken.')
+                QMessageBox.information(self, 'Information', 'Die Spannung zwischen GND und R709 liegt zwischen 3,25 und 3,35. Dies ist ein guter Wert. Fahren Sie fort, indem Sie die Taste NEXT drücken.')
                 
             self.start_button.setEnabled(True)
             self.result_label.setStyleSheet("")
@@ -268,8 +291,10 @@ class App(QMainWindow):
             self.result_label.setStyleSheet("")
         elif self.start_button.text() == 'NEXTT':
             self.result_label.setVisible(False)
-            self.on_button_click('images_/images/Start2.png')
-            self.info_label.setText('Press FPGA...\n Switch OFF the PowerSupply and Multimeter.')
+            self.on_button_click('images_/images/PP/_2.jpg')
+            self.powersupply.write('OUTPut '+self.PS_channel+',OFF')
+            self.multimeter.close()
+            self.info_label.setText('Press FPGA...\n')
             self.start_button.setText('FPGA')
         elif self.start_button.text()=='FPGA':
             self.on_button_click('images_/images/Fix_Bolts.jpg')
@@ -293,15 +318,10 @@ class App(QMainWindow):
             self.info_label.setText("Check current. It should be 0.09 and 0.15\n\n Press TEST-I")
         elif self.start_button.text()== 'TEST-I':
             print('channel',self.PS_channel)
-            time.sleep(1)
-            try:
-                self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
-                time.sleep(1)
-                self.powersupply.write('OUTPut '+self.PS_channel+',ON')
-                self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
-                time.sleep(1)
-            except visa.errors.VisaIOError:
-                self.textBrowser.append('on the powersupply')
+            self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
+            self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+            self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
+            time.sleep(3)
             self.calc_voltage_before_jumper()
             self.start_button.setText('CHECK_L')
             self.on_button_click('images_/images/Welcome.jpg')
@@ -333,14 +353,6 @@ class App(QMainWindow):
         self.multimeter.write('CONF:VOLT:DC 5')
         voltage = float(self.multimeter.query('READ?'))
         time.sleep(2)
-        # if 3.25 < voltage < 3.35:
-        #     self.result_label.setStyleSheet("background-color: green;")
-        #     self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
-        # else:
-        #     self.result_label.setStyleSheet("background-color: red;")
-        #     self.result_label.setText('Voltage before Jumper\n\n'+str(voltage)+'V')
-        #     # QMessageBox.information(self, 'Information', 'Wrong Voltage. Check Connections again.')
-        #     print(voltage)
         return voltage
 
     def channelSet(self):
@@ -367,7 +379,6 @@ class App(QMainWindow):
         elif self.vals_button.text() == 'I':
             self.max_current = self.value_edit.text()
             self.powersupply.write('CH1:CURRent ' + self.max_current)
-            # self.textBrowser.append(self.powersupply.query(self.PS_channel+':CURRent?'))
             self.info_label.setText('Enter 0.05 in the box next to I')
             self.powersupply.write('OUTPut '+self.PS_channel+',ON')
             self.value_edit.setVisible(False)
@@ -382,7 +393,7 @@ class App(QMainWindow):
             self.on_button_click('images_/images/PP8.jpg')
         else:
             self.textBrowser.append('Wrong Input')
-
+########################################################################################################
     def calc_voltage_before_jumper(self):
         current = float(self.powersupply.query('MEASure:CURRent? '+self.PS_channel))
         self.result_label.setVisible(True)
@@ -423,14 +434,14 @@ class App(QMainWindow):
             if 0.095 <= current <= 0.155:
                 self.result_label.setStyleSheet("background-color: green;")
                 self.current_after_FPGA = current
-                QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")
+                QMessageBox.information(self, "Information", "Perfect. Please be care full with each and every step from here.")
                 self.on_button_click('images_/images/R709.jpg')
                 self.info_label.setText('\n \n Press TEST V Button to run the Voltage Tests. Be careful.')
                 self.test_button.setText('TEST-V')
             else:
                 self.result_label.setStyleSheet("background-color: red;")
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Equipment back.')          
-
+########################################################################################################
     def connect_multimeter(self):        
             if not self.multimeter:
                 try:
@@ -445,7 +456,7 @@ class App(QMainWindow):
                 self.multimeter.close()
                 self.multimeter = None
                 self.textBrowser.append(self.multimeter.query('*IDN?'))
-
+########################################################################################################
     def connect_powersupply(self):
         if not self.powersupply:
             try:
@@ -466,36 +477,35 @@ class App(QMainWindow):
             self.powersupply = None
             self.PS_button.setText('PS ON')
             self.textBrowser.setText('Netzteil Disconnected')
+########################################################################################################
     def start_continuous_measurement(self):
         self.textBrowser.append('Measure according to the image..')
         self.image_label.setPixmap(QPixmap('images_/images/R709_.jpg'))
-        self.show_message('measurement start.', QMessageBox.Information)
+        self.show_good_message('measurement start.')
         self.attempt_count = 0
         self.measure_count = 0
         self.dc_measure_count = 0
         self.ac_measure_count = 0
         self.is_ac_measurement = False
         self.measure()
-
+########################################################################################################
     def show_message(self, message, icon=QMessageBox.Information):
         msg_box = QMessageBox(self)
         msg_box.setIcon(icon)
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         return msg_box.exec_()
-
-
+########################################################################################################
     def measure(self):
         try:
-            time.sleep(3)
             if not self.is_ac_measurement:
-                if self.dc_measure_count==0:# and self.attempt_count<=3:
-                    dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-                    self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.result_label.setText(str(dc_voltage))
+                dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
+                self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
+                self.result_label.setText(str(dc_voltage))
+                if self.dc_measure_count==0:
                     if 3.25 <= dc_voltage <= 3.35:
                         self.result_label.setStyleSheet('background-color: green;')
-                        self.image_label.setPixmap(QPixmap('images_/images/R709.jpg'))
+                        self.image_label.setPixmap(QPixmap('images_/images/R709_.jpg'))
                         self.DCV_Results[0] = dc_voltage
                         self.dc_measure_count += 1
                         self.measure_count += 1
@@ -507,9 +517,6 @@ class App(QMainWindow):
                         self.attempt_count += 1
 
                 elif self.dc_measure_count == 1:
-                    dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-                    self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.result_label.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.result_label.setStyleSheet('background-color: green;')
                         self.image_label.setPixmap(QPixmap('images_/images/R700.jpg'))
@@ -524,17 +531,7 @@ class App(QMainWindow):
                         self.attempt_count += 1
 
                 elif self.dc_measure_count == 2:
-                    self.show_message('Change the Groung to ISOGND.', QMessageBox.Information)
-                    self.image_label.setPixmap(QPixmap('images_/images/C443.jpg'))
-                    self.dc_measure_count += 1
-                    self.measure_count += 1
-
-
-                elif self.dc_measure_count == 3:
-                    dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-                    self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.result_label.setText(str(dc_voltage))
-                    if 11.95 <= dc_voltage <= 12.05:
+                    if 11.90 <= dc_voltage <= 12.10:
                         self.result_label.setStyleSheet('background-color: green;')
                         self.image_label.setPixmap(QPixmap('images_/images/C443.jpg'))
                         self.DCV_Results[2] = dc_voltage
@@ -545,6 +542,20 @@ class App(QMainWindow):
                         self.result_label.setStyleSheet('background-color: red;')
                         self.image_label.setPixmap(QPixmap('images_/images/C443.jpg'))
                         self.DCV_Results[2] = dc_voltage
+                        self.attempt_count += 1
+
+                elif self.dc_measure_count == 3:
+                    if 4.95 <= dc_voltage <= 5.05:
+                        self.result_label.setStyleSheet('background-color: green;')
+                        self.image_label.setPixmap(QPixmap('images_/images/C442.jpg'))
+                        self.DCV_Results[3] = dc_voltage
+                        self.dc_measure_count += 1
+                        self.measure_count += 1
+                        self.is_ac_measurement = True
+                    else:
+                        self.result_label.setStyleSheet('background-color: red;')
+                        self.image_label.setPixmap(QPixmap('images_/images/C442.jpg'))
+                        self.DCV_Results[3] = dc_voltage
                         self.attempt_count += 1
 
                 elif self.dc_measure_count == 4:
@@ -553,15 +564,15 @@ class App(QMainWindow):
                     self.result_label.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.result_label.setStyleSheet('background-color: green;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C442.jpg'))
-                        self.DCV_Results[3] = dc_voltage
+                        self.image_label.setPixmap(QPixmap('images_/images/C441.jpg'))
+                        self.DCV_Results[4] = dc_voltage
                         self.dc_measure_count += 1
                         self.measure_count += 1
                         self.is_ac_measurement = True
                     else:
                         self.result_label.setStyleSheet('background-color: red;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C442.jpg'))
-                        self.DCV_Results[3] = dc_voltage
+                        self.image_label.setPixmap(QPixmap('images_/images/C441.jpg'))
+                        self.DCV_Results[4] = dc_voltage
                         self.attempt_count += 1
 
                 elif self.dc_measure_count == 5:
@@ -570,35 +581,18 @@ class App(QMainWindow):
                     self.result_label.setText(str(dc_voltage))
                     if 4.95 <= dc_voltage <= 5.05:
                         self.result_label.setStyleSheet('background-color: green;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C441.jpg'))
-                        self.DCV_Results[4] = dc_voltage
+                        self.image_label.setPixmap(QPixmap('images_/images/C412.jpg'))
+                        self.DCV_Results[5] = dc_voltage
                         self.dc_measure_count += 1
                         self.measure_count += 1
                         self.is_ac_measurement = True
                     else:
                         self.result_label.setStyleSheet('background-color: red;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C441.jpg'))
-                        self.DCV_Results[4] = dc_voltage
+                        self.image_label.setPixmap(QPixmap('images_/images/C412.jpg'))
+                        self.DCV_Results[5] = dc_voltage
                         self.attempt_count += 1
 
                 elif self.dc_measure_count == 6:
-                    dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
-                    self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
-                    self.result_label.setText(str(dc_voltage))
-                    if 4.98 <= dc_voltage <= 5.02:
-                        self.result_label.setStyleSheet('background-color: green;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C412.jpg'))
-                        self.DCV_Results[5] = dc_voltage
-                        self.dc_measure_count += 1
-                        self.measure_count += 1
-                        self.is_ac_measurement = True
-                    else:
-                        self.result_label.setStyleSheet('background-color: red;')
-                        self.image_label.setPixmap(QPixmap('images_/images/C412.jpg'))
-                        self.DCV_Results[5] = dc_voltage
-                        self.attempt_count += 1
-
-                elif self.dc_measure_count == 7:
                     dc_voltage = float(self.multimeter.query('MEAS:VOLT:DC?'))
                     self.textBrowser.append(f'DC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {dc_voltage}')
                     self.result_label.setText(str(dc_voltage))
@@ -629,9 +623,8 @@ class App(QMainWindow):
 
             else:
                 ac_voltage = float(self.multimeter.query('MEAS:VOLT:AC?'))
-                self.textBrowser.append(f'AC Voltage (Measurement {self.measure_count + 1}, Attempt {self.attempt_count + 1}): {ac_voltage}')
+                self.textBrowser.append(f'AC Voltage (Measurement {self.measure_count}, Attempt {self.attempt_count + 1}): {ac_voltage}')
                 self.result_label.setText(str(ac_voltage))
-
                 if self.ac_measure_count == 0:
                     if ac_voltage < 0.01:
                         self.result_label.setStyleSheet('background-color: green;')
@@ -653,6 +646,8 @@ class App(QMainWindow):
                         self.ACV_Results[1] = ac_voltage
                         self.ac_measure_count += 1
                         self.is_ac_measurement = False
+                        self.show_message('Change the Groung to ISOGND.', QMessageBox.Information)
+                        self.image_label.setPixmap(QPixmap('images_/images/C443.jpg'))
                     else:
                         self.result_label.setStyleSheet('background-color: red;')
                         self.image_label.setPixmap(QPixmap('images_/images/R700.jpg'))
@@ -728,13 +723,22 @@ class App(QMainWindow):
 
 
                 if self.attempt_count == 3:
-                    self.attempt_count = 0
-                    self.image_label.setPixmap(QPixmap(self.test_images[self.ac_measure_count]))
-                    self.save_measurement(ac_voltage)
-                    self.ac_measure_count += 1
-                    self.is_ac_measurement = False
-                    self.measure_count += 1
-                    time.sleep(0.5)
+                    if self.ac_measure_count == 1:
+                        self.attempt_count = 0
+                        self.image_label.setPixmap(QPixmap(self.test_images[self.ac_measure_count]))
+                        self.save_measurement(ac_voltage)
+                        self.ac_measure_count += 1
+                        self.is_ac_measurement = False
+                        self.show_message('Change the Groung to ISOGND.', QMessageBox.Information)
+                        self.image_label.setPixmap(QPixmap('images_/images/C443.jpg'))
+                        time.sleep(2)
+                    else:
+                        self.attempt_count = 0
+                        self.image_label.setPixmap(QPixmap(self.test_images[self.ac_measure_count]))
+                        self.save_measurement(ac_voltage)
+                        self.ac_measure_count += 1
+                        self.is_ac_measurement = False
+                        time.sleep(2)
 
 
         except visa.errors.VisaIOError as e:
@@ -743,11 +747,15 @@ class App(QMainWindow):
             self.result_label.setStyleSheet('background-color: red;')
             self.show_message(error_message, QMessageBox.Critical)
 
-        if self.measure_count < 15:
-            QTimer.singleShot(5000, self.measure)
+        if not (self.ac_measure_count  == 7) and self.measure_count < 8 :
+            print('self.ac_measure_count',self.ac_measure_count)
+            QTimer.singleShot(3000, self.measure)
         else:
             self.show_message('Continuous measurement completed.', QMessageBox.Information)
-            print('resulted values are \n', self.ACV_Results, self.DCV_Results)
+            print('resulted values are \n', self.ACV_Results ,'\n', self.DCV_Results)
+            self.test_button.setVisible(False)
+            self.start_button.setText('NEXTT')
+            self.start_button.setVisible(True)
 
     def save_measurement(self, value):
         print(f'Measurement saved: {value}')
@@ -756,7 +764,7 @@ class App(QMainWindow):
     def show_good_message(self, message):
         self.timer1 = QTimer()
         self.timer1.timeout.connect(self.enable_button)
-        self.timer1.start(10000)
+        self.timer1.start(5000)
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Question)
         msgBox.setText(message)
@@ -810,7 +818,7 @@ class App(QMainWindow):
     def update_lineinsert(self, response):
         self.id_Edit.setText(response)
     ########################################################################################################
-    def start_process(self):  
+    def start_process(self):
         if self.thread is None or not self.thread.isRunning():
             QMessageBox.information(self, "Process Started", "Process has been started.")
             self.thread = WorkerThread(self.commands, self.serial_port)
@@ -823,7 +831,6 @@ class App(QMainWindow):
     ########################################################################################################
     def process_completed(self):
         QMessageBox.information(self, "Process Completed", "Process has been completed.")
-        self.save_button.setVisible(True)
 
     def enable_button(self):
         self.timer1.stop()
