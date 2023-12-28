@@ -9,6 +9,7 @@ class WorkerThread(QThread):
     process_completed = pyqtSignal()
     result_signal = pyqtSignal(str)
     response_signal = pyqtSignal(str)
+    final_result_signal = pyqtSignal(str)
     def __init__(self, commands, serial_port):
         super().__init__()
         self.commands = commands
@@ -38,6 +39,7 @@ class WorkerThread(QThread):
                                     break
                                 response = self.serial_port.readline().decode('ascii')
                                 self.result_signal.emit(response)
+                self.final_result_signal.emit(response)
                 self.serial_port.close()
                 self.process_completed.emit()
             else:
@@ -84,9 +86,9 @@ class App(QMainWindow):
                     'i2c:scan', 'i2c:write:4F:06990918', 'i2c:write:4F:01F8', 'i2c:read:4F:1E:00']
         self.start_button.clicked.connect(self.connect)
         ########################################################################################################
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_time_label)
-        self.timer.start(1000)
+        # self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.update_time_label)
+        # self.timer.start(1000)
         ########################################################################################################
         self.rm = visa.ResourceManager()
         self.multimeter = None
@@ -100,10 +102,13 @@ class App(QMainWindow):
         self.PS_channel = self.config_file.get('Power Supplies', 'Channel_set')
         self.max_voltage = self.config_file.get('Power Supplies', 'Voltage_set')
         self.max_current = self.config_file.get('Power Supplies', 'Current_set')
-        self.channel_combobox.setCurrentText(self.PS_channel)
         self.channel_combobox.activated.connect(self.channelSet)
         self.value_edit.returnPressed.connect(self.load_voltage_current)
 
+
+        # self.final_config_file = configparser.ConfigParser()
+        # self.final_config_file.read(self.current_config_file)
+        # self.current_before_jumper = self.final_config_file.
         ########################################################################################################
 
         self.vals_button.setVisible(False)
@@ -165,6 +170,13 @@ class App(QMainWindow):
             self.info_label.setText("Drücken Sie die Taste 'START'.")
             self.on_button_click('images_/images/PP1.jpg')
 ########################################################################################################
+
+    def update_line_edit_color(self,color):
+        palette = QPalette()
+        palette.setColor(QPalette.Base, QColor(color))
+        self.result_label.setPalette(palette)
+
+
     def showDialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', '/', 'INI Files (*.ini);;All Files (*)')
         if fname:
@@ -240,9 +252,21 @@ class App(QMainWindow):
         elif self.start_button.text()=='POWER ON':
             self.connect_powersupply()
         elif self.start_button.text()=='STROM-I':
+            self.result_label.setVisible(True)
             time.sleep(1)
-            self.calc_voltage_before_jumper()
-            self.result_label.setStyleSheet("")
+            # self.calc_voltage_before_jumper()
+            # self.result_label.setStyleSheet("")
+            current = float(self.powersupply.query('MEASure:CURRent? '+self.PS_channel))
+            if 0.04 <= current <= 0.06:
+                self.update_line_edit_color('green')
+                self.result_label.setText(str(current))
+
+                print('correct',current)
+            else:
+                self.update_line_edit_color('red')
+                self.result_label.setText(str(current))
+                print(current)
+            self.start_button.setText('SPANNUNG')
 
         elif self.start_button.text()=='SPANNUNG':
             self.start_button.setEnabled(False)
@@ -266,7 +290,7 @@ class App(QMainWindow):
             self.result_label.setStyleSheet("")
             self.start_button.setText('POWER OFF')
             self.info_label.setText('Drücken Sie die Taste "POWER OFF", um das Netzteil auszuschalten.')
-            self.on_button_click('images_/images/Start2.png')
+            self.on_button_click('images_/images/PowerOFF.jpg')
 
         elif self.start_button.text()=='POWER OFF':
             self.result_label.setVisible(False)
@@ -317,14 +341,16 @@ class App(QMainWindow):
             self.on_button_click('images_/images/PP7.jpg')
             self.info_label.setText("Check current. It should be 0.09 and 0.15\n\n Press TEST-I")
         elif self.start_button.text()== 'TEST-I':
-            print('channel',self.PS_channel)
-            self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
-            self.powersupply.write('OUTPut '+self.PS_channel+',ON')
-            self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
-            time.sleep(3)
+            # print('channel',self.PS_channel)
+            # self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
+
+            # self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+            # self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
+            # time.sleep(3)
+            self.try_power_multi()
             self.calc_voltage_before_jumper()
             self.start_button.setText('CHECK_L')
-            self.on_button_click('images_/images/Welcome.jpg')
+            self.on_button_click('images_/images/LED.jpg')
             self.result_label.setVisible(False)
             self.info_label.setText("Check left 2 green lights\n\n Press CHECK_L")
         elif self.start_button.text()=='CHECK_L':
@@ -344,10 +370,23 @@ class App(QMainWindow):
         elif self.start_button.text()=='SERIAL TEST':
             self.start_process()
             self.info_label.setText('Wait 10 seconds ')
-            self.on_button_click('images_/images/Start2.png')
-            QMessageBox.information(self, "Important", "Read and watch the image clearly and do the process carefully.")
+            self.on_button_click('images_/images/LED.png')
+            QMessageBox.information(self, "Important", "Watch the image clearly and do the process carefully.")
 
         ########################################################################################################
+
+    def try_power_multi(self):
+        try:
+            if not self.powersupply:
+                self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
+                self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+            elif not self.multimeter:
+                self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
+            else:
+                self.powersupply.write('OUTPut '+self.PS_channel+',ON')
+                self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')
+        except AttributeError:
+            self.textBrowser.append('Erro in connecting PowerSupply and Multimeter')
 
     def voltage_find_before_jumper(self):
         self.multimeter.write('CONF:VOLT:DC 5')
@@ -400,25 +439,25 @@ class App(QMainWindow):
         if self.start_button.text() == 'STROM-I':
             self.result_label.setText('Current before Jumper\n'+str(current)+'A')
             if 0.04 <= current <= 0.06:
-                self.result_label.setStyleSheet("background-color: green;")
+                self.update_line_edit_color('green')
                 self.start_button.setText('SPANNUNG')
                 # self.start_button.setVisible(False)
                 self.current_before_jumper = current
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
             else:
-                self.result_label.setStyleSheet("background-color: red;")
+                self.update_line_edit_color('red')
                 self.current_before_jumper = current
                 self.start_button.setText('SPANNUNG')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
-                self.result_label.setStyleSheet("background-color: red;")
+                self.update_line_edit_color('red')
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Euipment back.')
             # self.result_label.setVisible(False)
         elif self.start_button.text() == 'STROM':
             self.result_label.setText('Current After Jumper\n'+str(current)+'A')
             if 0.09 <= current <= 0.15:
-                self.result_label.setStyleSheet("background-color: green;")
+                self.update_line_edit_color('green')
                 self.current_after_jumper = current
                 QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")
                 self.on_button_click('images_/images/R709.jpg')
@@ -427,19 +466,19 @@ class App(QMainWindow):
                 self.test_button.setVisible(True)
                 self.start_button.setVisible(False)
             else:
-                self.result_label.setStyleSheet("background-color: red;")
+                self.update_line_edit_color('red')
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Euipment back.')       
         elif self.start_button.text() == 'TEST-I':
             self.result_label.setText('Current After FPGA\n'+str(current)+'A')
             if 0.095 <= current <= 0.155:
-                self.result_label.setStyleSheet("background-color: green;")
+                self.update_line_edit_color('green')
                 self.current_after_FPGA = current
                 QMessageBox.information(self, "Information", "Perfect. Please be care full with each and every step from here.")
                 self.on_button_click('images_/images/R709.jpg')
                 self.info_label.setText('\n \n Press TEST V Button to run the Voltage Tests. Be careful.')
                 self.test_button.setText('TEST-V')
             else:
-                self.result_label.setStyleSheet("background-color: red;")
+                self.update_line_edit_color('red')
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Equipment back.')          
 ########################################################################################################
     def connect_multimeter(self):        
@@ -510,6 +549,7 @@ class App(QMainWindow):
                         self.dc_measure_count += 1
                         self.measure_count += 1
                         self.is_ac_measurement = True
+                        self.update_config_file(self.current_config_file, {'Power Supply': {'voltage_before_jumper': dc_voltage}})
                     else:
                         self.result_label.setStyleSheet('background-color: red;')
                         self.image_label.setPixmap(QPixmap('images_/images/R709_.jpg'))
@@ -749,7 +789,7 @@ class App(QMainWindow):
 
         if not (self.ac_measure_count  == 7) and self.measure_count < 8 :
             print('self.ac_measure_count',self.ac_measure_count)
-            QTimer.singleShot(3000, self.measure)
+            QTimer.singleShot(5000, self.measure)
         else:
             self.show_message('Continuous measurement completed.', QMessageBox.Information)
             print('resulted values are \n', self.ACV_Results ,'\n', self.DCV_Results)
@@ -816,7 +856,12 @@ class App(QMainWindow):
         self.textBrowser.append(message)
 
     def update_lineinsert(self, response):
+        self.id_Edit.setVisible(True)
         self.id_Edit.setText(response)
+
+    def update_finalresult(self, response):
+        self.Final_result_box.setVisible(True)
+        self.Final_result_box.setText(response)
     ########################################################################################################
     def start_process(self):
         if self.thread is None or not self.thread.isRunning():
@@ -825,6 +870,7 @@ class App(QMainWindow):
             self.thread.result_signal.connect(self.on_widget_button_clicked)
             self.thread.process_completed.connect(self.process_completed)
             self.thread.response_signal.connect(self.update_lineinsert)
+            self.thread.final_result_signal.connect(self.update_finalresult)
             self.thread.start()
         else:
             QMessageBox.warning(self, "Process In Progress", "Process is already running.")
@@ -890,9 +936,6 @@ class App(QMainWindow):
             return
         version_num, ok = QInputDialog.getText(self, 'Enter Version Num', 'Enter Version Num:')
         if not ok:
-            return
-        serial_num, ok = QInputDialog.getText(self, 'Enter Serial Num', 'Enter Serial Num:')
-        if not ok:
             return        
         # Default values for power supply attributes
         power_supply_values = {
@@ -926,14 +969,34 @@ class App(QMainWindow):
         # Create or update the INI file
         config = configparser.ConfigParser()
         config['Settings'] = {'Model Num': model_num,
-                              'Version Num': version_num,
-                              'Serial Num': serial_num}
+                              'Version Num': version_num}
         config['Power Supply'] = power_supply_values
         config['I2C_Test'] = I2C_test_values
 
         with open(ini_file_path, 'w') as configfile:
             config.write(configfile)
+        self.current_config_file = ini_file_path
+        print('config file created', self.current_config_file)
         #QMessageBox.information(self, 'Success', 'INI File created successfully.')
+
+############################################################################################
+    def update_config_file(self, name, updated_values):
+        ini_file_path = name + '.ini'
+
+        if not os.path.exists(ini_file_path):
+            QMessageBox.warning(self, 'File Not Found', f'INI file "{ini_file_path}" not found.')
+            return
+
+        config = configparser.ConfigParser()
+        config.read(ini_file_path)
+
+        # Update the config file with new values
+        for section, values in updated_values.items():
+            for key, value in values.items():
+                config.set(section, key, str(value))
+
+        with open(ini_file_path, 'w') as configfile:
+            config.write(configfile)
 #########################################################################################################################################################################################
 
 def main():

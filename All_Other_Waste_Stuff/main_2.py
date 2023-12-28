@@ -87,12 +87,18 @@ class App(QMainWindow):
         # self.timer = QTimer(self)
         # self.timer.timeout.connect(self.update_time_label)
         # self.timer.start(1000)
+
+        self.voltage_timer = QTimer(self)
+        # self.voltage_timer.timeout.connect(self.check_voltage_stability)
+        # Initialize voltage values
+        self.previous_voltage1  = 0.0
         ########################################################################################################
         self.rm = visa.ResourceManager()
         self.multimeter = None
         self.powersupply = None
         # self.test_button.clicked.connect(self.on_cal_voltage_current)
-        self.test_button.clicked.connect(self.change_image)
+        # self.test_button.clicked.connect(self.change_image)
+        self.test_button.clicked.connect(self.measure_voltage)
         ########################################################################################################
         self.config_file = configparser.ConfigParser()
         self.config_file.read('conf_igg.ini')
@@ -118,27 +124,34 @@ class App(QMainWindow):
         self.refresh_button.setVisible(False)
     
         self.result_label.setVisible(False)
-        self.save_button.setVisible(False)
+        # self.save_button.setVisible(False)
         self.id_Edit.setVisible(False)
         self.Final_result_box.setVisible(False)
         self.ch_button.setVisible(False)
         self.channel_combobox.setVisible(False)
-
         # self.firstMessage()
-        self.on_button_click('images_/images/PP1.jpg')
+        self.on_button_click('images_/baseimages/PP1.jpg')
         self.info_label.setText('Welcome \n \n Drücken Sie die Taste START.')
         ########################################################################################################
-
-
-        self.save_button.clicked.connect(self.create_ini_file)
-
-
+        # self.save_button.clicked.connect(self.create_ini_file)
         self.test_images = ['images_/images/R700.jpg','images_/images/R709_before_jumper.jpg','images_/images/R700_DC.jpg', 'images_/images/PP2.png','images_/images/C443.jpg','images_/images/C442.jpg','images_/images/C441.jpg','images_/images/C412.jpg',
                             'images_/images/C430.jpg','images_/images/C443_1.jpg','images_/images/C442_1.jpg','images_/images/C441_1.jpg','images_/images/C412_1.jpg','images_/images/C430_1.jpg', 'images_/images/PP.jpg',]
         self.test_index = 0
         self.DCV_readings = [0,0,0,0,0,0,0]
         self.ACV_readings = [0,0,0,0,0,0,0]
         #########################################################################self.rm.open_resource('TCPIP0::192.168.222.207::INSTR')###############################
+    def measure_voltage(self):
+            while True:
+                measured_voltage = float(self.multimeter.query(":MEASure:VOLTage:DC?").strip())
+                if 3.25 <= measured_voltage <= 3.35:
+                    print(f"DC Voltage: {measured_voltage}V (Within specified range)")
+                    time.sleep(2)
+                    measured_ac_voltage = float(self.multimeter.query(":MEASure:VOLTage:AC?").strip())
+                    print(f"AC Voltage: {measured_ac_voltage}V")
+                    break
+                else:
+                    print(f"DC Voltage: {measured_voltage}V (Outside specified range)")
+
     def firstMessage(self):
         msgBox = QMessageBox()
         msgBox.setWindowIcon(QIcon('images_/icons/icon.png'))
@@ -162,7 +175,7 @@ class App(QMainWindow):
         if ret_value == QMessageBox.Ok:
             self.title_label.setText('Preparation Test')
             self.info_label.setText("Drücken Sie die Taste 'START'.")
-            self.on_button_click('images_/images/PP1.jpg')
+            self.on_button_click('images_/baseimages/PP1.jpg')
     ########################################################################################################
     def on_button_click(self, file_path):
         if file_path:
@@ -175,26 +188,26 @@ class App(QMainWindow):
                 reply = self.show_good_message('Prüfen Sie Ihre gesamte Umgebung korrekt und sorgfältig. Wir können sie später nicht mehr ändern.')                
                 if reply == QMessageBox.Yes:                    
                     self.start_button.setText('NEXT')
-                    self.on_button_click('images_/images/On_Devices.jpg')
+                    self.on_button_click('images_/baseimages/On_Devices.jpg')
                     self.info_label.setText('Drücken Sie den "Power ON"-Schalter am \n\n Netzteil und auch am Multimeter. Siehe die Knöpfe auf der \n\n nebenstehenden Abbildung. Warten Sie 10 bis 12 Sekunden,\n\n num diese Geräte einzuschalten. Sie können die\n\nTaste "MULTI ON" später sehen. Drücken Sie die Taste "NEXT".')                    
                 else:
                     self.on_button_click('images_/icons/next_1.jpg')
 
     def connect(self):
         if self.start_button.text() == 'START':
-            self.on_button_click('images_/images/board_on_mat_.jpg')
+            self.on_button_click('images_/baseimages/board_on_mat_.jpg')
             self.info_label.setText("Legen Sie die Platine auf die ESD-Matte\n\n(siehe Abbildung rechts).\n\nÜberprüfen Sie die gesamte Umgebung anhand der Abbildung.\n\nPrüfen Sie alle Anschlüsse.\n\n Drücken Sie 'STEP1'.")
             self.start_button.setText("STEP1")
         elif self.start_button.text() == 'STEP1':
-            self.on_button_click('images_/images/PP4_.jpg')
+            self.on_button_click('images_/baseimages/PP4_.jpg')
             self.info_label.setText('Überprüfen Sie alle "4" Schrauben der Platine (siehe Abbildung).\n\nMontieren Sie alle 4 Schrauben (4x M2,5x5 Torx)\n\nDrücken Sie "STEP2".')
             self.start_button.setText("STEP2")
         elif self.start_button.text() == 'STEP2':
-            self.on_button_click('images_/images/board_on_mat.jpg')
+            self.on_button_click('images_/baseimages/board_on_mat.jpg')
             self.info_label.setText('Nachdem Sie die 4 Schrauben angebracht haben,\n\n legen Sie die Platine wieder auf die ESD-Matte und\n\n drücken Sie dann "STEP3".')
             self.start_button.setText("STEP3")
         elif self.start_button.text()=='STEP3':
-            self.on_button_click('images_/images/board_with_cabels.jpg')
+            self.on_button_click('images_/baseimages/board_with_cabels.jpg')
             self.info_label.setText('Schließen Sie die Stromkabel an die Platine an (siehe Abbildung).\n\n\nDrücken Sie STEP4.')
             self.start_button.setText("STEP4")
             item = QTableWidgetItem('STEP4')
@@ -205,9 +218,9 @@ class App(QMainWindow):
         elif self.start_button.text()=='NEXT':
             self.info_label.setText("Sie können MULTIMETER Name auf TextBox sehen.\n\nDrücken Sie die Taste MULTI ON, wenn sie erscheint.")
             self.start_button.setEnabled(False)
-            self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
+            # self.show_good_message('Warten Sie 10 Sekunden lang. Bis das Netzgerät und das Multimeter SET sind.')
             self.start_button.setText('MULTI ON')            
-            self.on_button_click('images_/images/PP9.jpg')
+            self.on_button_click('images_/baseimages/PP9.jpg')
         elif self.start_button.text()=='MULTI ON':
             self.connect_multimeter()
         elif self.start_button.text()=='POWER ON':
@@ -230,6 +243,8 @@ class App(QMainWindow):
                 time.sleep(0.5)
                 self.voltage_before_jumper = self.voltage_find_before_jumper()
             if 3.25 < self.voltage_before_jumper < 3.35:
+                self.result_label.setStyleSheet("background-color: green;")
+                self.result_label.setText('Voltage before Jumper\n\n'+str(self.voltage_before_jumper)+'V')
                 QMessageBox.information(self, 'Information', 'Die Spannung zwischen GND und R709 liegt zwischen 3,25 und 3,35. Dies ist ein guter Wert. Fahren Sie fort, indem Sie die Taste NEXT drücken.')
                 self.start_button.setText('SPANNUNG')
 
@@ -486,7 +501,7 @@ class App(QMainWindow):
         QMessageBox.information(self, "Information", "See the Image for component reference. Place the leads exactly as shown in the image and place for minimum 3 seconds")
         while self.test_index < len(self.test_images):
             time.sleep(1)
-
+    
             if self.test_index == 0:
                 self.DCV_readings[0] = max(self.DC_voltage_R709_R700())
                 self.result_label.setText(str(self.DCV_readings[0]))
@@ -702,7 +717,7 @@ class App(QMainWindow):
                 self.ACV_readings[3] = max(self.AC_voltage_R709_R700())
                 self.result_label.setText(str(self.ACV_readings[3]))
                 self.tableWidget.setItem(17,2,QTableWidgetItem(str(self.ACV_readings[3])))
-                if self.ACV_readings[3] < 0.005:
+                if self.ACV_readings[3] < 0.05:
                     self.result_label.setStyleSheet("background-color: green;")
                     self.on_button_click(self.test_images[self.test_index])
                     QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")
@@ -722,7 +737,7 @@ class App(QMainWindow):
                 self.ACV_readings[4] = max(self.AC_voltage_R709_R700())
                 self.result_label.setText(str(self.ACV_readings[4]))
                 self.tableWidget.setItem(18,2,QTableWidgetItem(str(self.ACV_readings[4])))
-                if self.ACV_readings[4] < 0.005:
+                if self.ACV_readings[4] < 0.05:
                     self.result_label.setStyleSheet("background-color: green;")
                     self.on_button_click(self.test_images[self.test_index])
                     QMessageBox.information(self, "Important", "AC Voltage at R709 is in correct range.")

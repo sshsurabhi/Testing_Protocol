@@ -1,12 +1,5 @@
-import configparser
-import datetime
-import os
-import sys
-import time
-
-import openpyxl
+import os, configparser, datetime, sys, time, openpyxl, serial
 import pyvisa as visa
-import serial
 from PyQt5 import uic
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -74,7 +67,7 @@ class App(QMainWindow):
         super(App, self).__init__()
         uic.loadUi("UI/Test_App.ui", self)
         self.setWindowIcon(QIcon('images_/icons/Moewe.jpg'))
-        self.setFixedSize(self.size())
+        # self.setFixedSize()
         self.setStatusTip('Moewe Optik Gmbh. 2023')
         self.show()
         ########################################################################################################
@@ -108,37 +101,6 @@ class App(QMainWindow):
         self.max_current = self.config_file.get('Power Supplies', 'Current_set')
         self.value_edit.returnPressed.connect(self.load_voltage_current)
         ########################################################################################################
-        # self.test_button.setVisible(False)
-        # self.save_button.setVisible(False)
-        # self.version_button.setVisible(False)
-        # self.vals_button.setVisible(False)
-        # self.value_edit.setVisible(False)
-        # self.connect_button.setVisible(False)
-        # self.refresh_button.setVisible(False)
-        # self.version_edit.setVisible(False)
-        # self.port_box.setVisible(False)
-        # self.baudrate_box.setVisible(False)
-
-        ##############################################
-        self.vals_button.setVisible(False)
-        self.version_button.setVisible(False)
-        self.value_edit.setVisible(False)
-        self.version_edit.setVisible(False)
-        self.test_button.setVisible(False)
-
-        self.port_label.setVisible(False)
-        self.baudrate_label.setVisible(False)
-        self.port_box.setVisible(False)
-        self.baudrate_box.setVisible(False)
-        self.connect_button.setVisible(False)
-        self.refresh_button.setVisible(False)
-    
-        self.result_label.setVisible(False)
-        self.save_button.setVisible(False)
-        self.id_Edit.setVisible(False)
-        self.Final_result_box.setVisible(False)
-        self.ch_button.setVisible(False)
-        self.channel_combobox.setVisible(False)
 
         # self.firstMessage()
         self.on_button_click('images_/images/PP1.jpg')
@@ -146,7 +108,7 @@ class App(QMainWindow):
         ########################################################################################################
 
 
-        self.save_button.clicked.connect(self.create_ini_file)
+        # self.save_button.clicked.connect(self.create_ini_file)
 
 
         self.test_images = ['images_/images/R700.jpg','images_/images/R709_before_jumper.jpg','images_/images/R700_DC.jpg', 'images_/images/PP2.png','images_/images/C443.jpg','images_/images/C442.jpg','images_/images/C441.jpg','images_/images/C412.jpg',
@@ -242,7 +204,6 @@ class App(QMainWindow):
             self.info_label.setText('Press "POWER OFF" button')
             self.on_button_click('images_/images/Start2.png')
         elif self.start_button.text()=='POWER OFF':
-            self.result_label.setVisible(False)
             self.powersupply.write('OUTPut '+self.PS_channel+',OFF')
             self.info_label.setText('press "Close J" button\n and close the JUMPER with Soldering \n wait 10 seconds')
             self.start_button.setText('Close J')
@@ -261,7 +222,6 @@ class App(QMainWindow):
             self.calc_voltage_before_jumper()
             
         elif self.start_button.text() == 'NEXTT':
-            self.result_label.setVisible(False)
             self.on_button_click('images_/images/Start2.png')
             self.info_label.setText('Press FPGA...\n Switch OFF the PowerSupply and Multimeter.')
             self.start_button.setText('FPGA')
@@ -288,13 +248,6 @@ class App(QMainWindow):
         elif self.start_button.text() == 'AUTO_Test':
             self.on_button_click('images_/icons/next.jpg')
             self.info_label.setText("Press Connect Button")
-            self.start_button.setVisible(False)
-            self.port_label.setVisible(True)
-            self.baudrate_label.setVisible(True)
-            self.port_box.setVisible(True)
-            self.baudrate_box.setVisible(True)
-            self.connect_button.setVisible(True)
-            self.refresh_button.setVisible(True)
         elif self.start_button.text()=='SERIAL TEST':
             self.start_process()
             self.info_label.setText('Wait 10 seconds ')
@@ -326,25 +279,20 @@ class App(QMainWindow):
             # self.textBrowser.append(self.powersupply.query(self.PS_channel+':CURRent?'))
             self.info_label.setText('Enter 0.05 in the box next to I')
             self.powersupply.write('OUTPut '+self.PS_channel+',ON')
-            self.value_edit.setVisible(False)
-            self.start_button.setVisible(True)
             self.info_label.setText('Press STROM-I\n Check the "CUrrent" Value.') # modify here'
             self.start_button.setText('STROM-I')
             self.value_edit.setStyleSheet("")
             self.value_edit.clear()
-            self.vals_button.setVisible(False)
             self.on_button_click('images_/images/PP8.jpg')
         else:
             self.textBrowser.append('Wrong Input')
 
     def calc_voltage_before_jumper(self):
         current = float(self.powersupply.query('MEASure:CURRent? '+self.PS_channel))
-        self.result_label.setVisible(True)
         if self.start_button.text() == 'STROM-I':
             self.result_label.setText('Current before Jumper\n'+str(current)+'A')
             if 0.04 <= current <= 0.06:
                 self.start_button.setText('SPANNUNG')
-                # self.start_button.setVisible(False)
                 self.current_before_jumper = current
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
@@ -353,7 +301,6 @@ class App(QMainWindow):
                 self.start_button.setText('SPANNUNG')
                 self.info_label.setText('Press SPANNUNG to Calculate initial VOLTAGE at R709.\n \n Calculate Voltage at the Component \n Shown in the figure.')
                 self.on_button_click('images_/images/R709_before_jumper.jpg')
-            # self.result_label.setVisible(False)
         elif self.start_button.text() == 'STROM':
             self.result_label.setText('Current After Jumper\n'+str(current)+'A')
             if 0.09 <= current <= 0.15:
@@ -361,10 +308,7 @@ class App(QMainWindow):
                 QMessageBox.information(self, "Information", "Now Everything is perfect. Please be care full with each and every step from here.")
                 self.on_button_click('images_/images/R709.jpg')
                 self.info_label.setText('\n \n Press TEST V Button to run the Voltage Tests. Be careful.')
-                self.test_button.setText('TEST-V')
-                self.test_button.setVisible(True)
-                self.start_button.setVisible(False)
-                
+                self.test_button.setText('TEST-V')                
             else:
                 QMessageBox.information(self, 'Information', 'Supplying Current is either more or less. So please Swith OFF the PowerSupply, and Put back all the Euipment back.')
 
@@ -388,13 +332,8 @@ class App(QMainWindow):
             try:
                 self.powersupply = self.rm.open_resource('TCPIP0::192.168.222.141::INSTR')
                 self.textBrowser.append(self.powersupply.query('*IDN?'))
-                # self.textBrowser.append(self.powersupply.resource_name)
-                self.start_button.setVisible(False)
                 self.value_edit.setStyleSheet("background-color: lightyellow;")
                 self.info_label.setText('Write CH1 in the Yellow Box (Highlighted)\n \n next to CH \n\n Press "ENTER"')
-                # self.value_edit.setVisible(True)
-                self.value_edit.setVisible(True)
-                self.vals_button.setVisible(True)
                 self.vals_button.setText('CH')
                 self.value_edit.setText(self.PS_channel)
                 self.on_button_click('images_/images/PP7.jpg')
@@ -423,7 +362,6 @@ class App(QMainWindow):
 
     def on_cal_voltage_current(self):
         self.test_button.setEnabled(False)
-        self.start_button.setVisible(False)
         QMessageBox.information(self, "Important", "Careful with the Test Leads.")
         self.image_timer = QTimer(self)
         self.image_timer.timeout.connect(self.change_image)
@@ -433,8 +371,6 @@ class App(QMainWindow):
         if self.test_index < len(self.test_images):
             image_name = self.test_images[self.test_index]
             self.on_button_click(image_name)
-
-
             if self.test_index == 0:                
                 time.sleep(5)
                 attempt = 0
@@ -448,7 +384,6 @@ class App(QMainWindow):
                 else:
                     self.info_label.setText('Mesurement is not in range.')
                 self.info_label.setText('Calculate Voltage at this R700 component. Wait 5 seconds')
-
 
             elif self.test_index == 1:
                 time.sleep(5)
@@ -650,10 +585,7 @@ class App(QMainWindow):
                 else:
                     self.info_label.setText('Measurement is not in exected range. Do another time ot pack it back to Box.')
                 ####################################################################################################################################
-
-                self.test_button.setVisible(False)
                 self.start_button.setText('NEXTT')
-                self.start_button.setVisible(True)
             self.test_index += 1
 
         else:            
@@ -818,8 +750,6 @@ class App(QMainWindow):
             self.serial_port = serial.Serial(com_port, baud_rate, timeout=1)            # Create a new serial port object and open it
             self.port_box.setEnabled(False)  # Disable the combo boxes and change the button text
             self.start_button.setText('SERIAL TEST')
-            self.start_button.setVisible(True)
-            self.connect_button.setVisible(True)
             self.baudrate_box.setEnabled(False)
             self.connect_button.setText('Disconnect')
             self.textBrowser.append('Serial Communication Connected')
@@ -836,7 +766,6 @@ class App(QMainWindow):
             self.baudrate_box.setEnabled(True)
             self.refresh_button.setEnabled(True)
             self.connect_button.setText('Connect')
-            self.start_button.setVisible(False)
             self.textBrowser.append('Communication Disconnected')
     ########################################################################################################
     def refresh_connect(self):
@@ -862,7 +791,6 @@ class App(QMainWindow):
     ########################################################################################################
     def process_completed(self):
         QMessageBox.information(self, "Process Completed", "Process has been completed.")
-        self.save_button.setVisible(True)
 
     def enable_button(self):
         self.timer1.stop()
