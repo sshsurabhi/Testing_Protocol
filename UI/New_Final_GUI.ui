@@ -166,7 +166,7 @@ border-radius : 15px;</string>
       <string notr="true">background-color: rgb(111, 111, 101);</string>
      </property>
      <property name="text">
-      <string>TEST</string>
+      <string>ON</string>
      </property>
      <property name="checkable">
       <bool>false</bool>
